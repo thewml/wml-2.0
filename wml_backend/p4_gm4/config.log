@@ -1,0 +1,134 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:569: checking for mawk
+configure:569: checking for gawk
+configure:601: checking for gcc
+configure:714: checking whether the C compiler (gcc  ) works
+configure:730: gcc -o conftest    conftest.c  1>&5
+configure:756: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:761: checking whether we are using GNU C
+configure:770: gcc -E conftest.c
+configure:789: checking whether gcc accepts -g
+configure:851: checking for a BSD compatible install
+configure:904: checking whether make sets ${MAKE}
+configure:933: checking for ranlib
+configure:962: checking how to run the C preprocessor
+configure:983: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1042: checking for AIX
+configure:1066: checking for POSIXized ISC
+configure:1088: checking for minix/config.h
+configure:1098: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1094:26: fatal error: minix/config.h: No such file or directory
+ #include <minix/config.h>
+                          ^
+compilation terminated.
+configure: failed program was:
+#line 1093 "configure"
+#include "confdefs.h"
+#include <minix/config.h>
+configure:1136: checking for gcc option to accept ANSI C
+configure:1164: gcc -c -g -O2   conftest.c 1>&5
+configure:1185: checking for function prototypes
+configure:1199: checking for working const
+configure:1253: gcc -c -g -O2  conftest.c 1>&5
+configure:1274: checking for Cygwin environment
+configure:1290: gcc -c -g -O2  conftest.c 1>&5
+configure: In function 'main':
+configure:1284:20: error: '__CYGWIN32__' undeclared (first use in this function)
+ #define __CYGWIN__ __CYGWIN32__
+                    ^
+configure:1286:8: note: in expansion of macro '__CYGWIN__'
+ return __CYGWIN__;
+        ^
+configure:1284:20: note: each undeclared identifier is reported only once for each function it appears in
+ #define __CYGWIN__ __CYGWIN32__
+                    ^
+configure:1286:8: note: in expansion of macro '__CYGWIN__'
+ return __CYGWIN__;
+        ^
+configure: failed program was:
+#line 1279 "configure"
+#include "confdefs.h"
+
+int main() {
+
+#ifndef __CYGWIN__
+#define __CYGWIN__ __CYGWIN32__
+#endif
+return __CYGWIN__;
+; return 0; }
+configure:1307: checking for mingw32 environment
+configure:1319: gcc -c -g -O2  conftest.c 1>&5
+configure: In function 'main':
+configure:1315:8: error: '__MINGW32__' undeclared (first use in this function)
+ return __MINGW32__;
+        ^
+configure:1315:8: note: each undeclared identifier is reported only once for each function it appears in
+configure: failed program was:
+#line 1312 "configure"
+#include "confdefs.h"
+
+int main() {
+return __MINGW32__;
+; return 0; }
+configure:1338: checking for executable suffix
+configure:1348: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1373: checking for limits.h
+configure:1383: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1373: checking for memory.h
+configure:1383: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1373: checking for siginfo.h
+configure:1383: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1379:21: fatal error: siginfo.h: No such file or directory
+ #include <$ac_hdr>
+                     ^
+compilation terminated.
+configure: failed program was:
+#line 1378 "configure"
+#include "confdefs.h"
+#include <siginfo.h>
+configure:1373: checking for string.h
+configure:1383: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1373: checking for unistd.h
+configure:1383: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1410: checking for ANSI C header files
+configure:1423: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1490: gcc -o conftest -g -O2   conftest.c  1>&5
+configure: In function 'main':
+configure:1485:67: warning: incompatible implicit declaration of built-in function 'exit' [enabled by default]
+ if (XOR (islower (i), ISLOWER (i)) || toupper (i) != TOUPPER (i)) exit(2);
+                                                                   ^
+configure:1514: checking return type of signal handlers
+configure:1536: gcc -c -g -O2  conftest.c 1>&5
+configure:1555: checking for size_t
+configure:1591: checking for mkstemp
+configure:1619: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1591: checking for sigaction
+configure:1619: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1591: checking for sigaltstack
+configure:1619: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1591: checking for sigstack
+configure:1619: gcc -o conftest -g -O2   conftest.c  1>&5
+/tmp/cc2KxDD6.o: In function `main':
+/home/twim/wml-2.0.11/wml_backend/p4_gm4/configure:1613: warning: the `sigstack' function is dangerous.  `sigaltstack' should be used instead.
+configure:1591: checking for sigvec
+configure:1619: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1591: checking for strerror
+configure:1619: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1591: checking for tmpfile
+configure:1619: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1646: checking for working alloca.h
+configure:1658: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1679: checking for alloca
+configure:1712: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1878: checking for vprintf
+configure:1906: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:1890:6: warning: conflicting types for built-in function 'vprintf' [enabled by default]
+ char vprintf();
+      ^
+configure:1985: checking for strtol
+configure:2013: gcc -o conftest -g -O2   conftest.c  1>&5
+configure:2040: checking ecvt declaration
+configure:2115: checking if changeword is wanted
+configure:2134: checking if malloc debugging is wanted

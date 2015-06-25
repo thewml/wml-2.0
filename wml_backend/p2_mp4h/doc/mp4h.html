@@ -1,0 +1,7895 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="generator" content="HTML Tidy, see www.w3.org">
+<meta name="Author" content="Denis Barbier">
+<meta name="Generator" content="mp4h 1.3.0">
+<meta name="Created" content="10-Feb-2000">
+<meta name="Modified" content="Thu Dec 1 17:50:13 2005">
+<title>mp4h - Macro Processor for HTML Documents</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+<h1>mp4h - Macro Processor for HTML Documents</h1>
+
+<p>This documentation describes mp4h version 1.3.0.</p>
+
+<h2>Introduction</h2>
+
+<p>The <b>mp4h</b> software is a macro-processor specifically
+designed to deal with HTML documents. It allows powerful
+programming constructs, with a syntax familiar to HTML authors.</p>
+
+<p>This software is based on <a href=
+"http://www.metahtml.org/"><tt><b>Meta-HTML</b></tt></a>, written
+by Brian J. Fox, Even if both syntaxes look similar, source code is
+completely different. Indeed, a subset of <b>Meta-HTML</b> was used
+as a part of a more complex program, <b>WML</b> (<a href=
+"http://www.engelschall.com/sw/wml/"><tt>Website Meta
+Language</tt></a>) written by Ralf S. Engelschall and which i
+maintain since January 1999. For licensing reasons, it was hard to
+hack <b>Meta-HTML</b> and so i decided to write my own
+macro-processor.</p>
+
+<p>Instead of rewriting it from scratch, I preferred using another
+macro-processor engine. I chose <a href=
+"http://www.gnu.org/software/m4/"><tt>GNU <b>m4</b></tt></a>,
+written by Ren&eacute; Seindal, because of its numerous advantages
+: this software is stable, robust and very well documented. This
+version of <b>mp4h</b> is derived from GNU <b>m4</b> version 1.4n,
+which is a development version.</p>
+
+<p>The <b>mp4h</b> software is not an HTML editor; its unique goal
+is to provide an easy way to define its own macros inside HTML
+documents. There is no plan to add functionalities to automagically
+produce valid HTML documents, if you want to clean up your code or
+validate it, simply use a post-processor like <a href=
+"http://www.w3.org/People/Raggett/tidy/"><tt>tidy</tt></a>.</p>
+
+<h2>Command line options</h2>
+
+<p>Optional arguments are enclosed within square brackets. All
+option synonyms have a similar syntax, so when a long option
+accepts an argument, short option do too.</p>
+
+<p>Syntax call is</p>
+
+<pre>
+mp4h [options] [filename [filename] ...]
+</pre>
+
+<p>Options are described below. If no filename is specified, or if
+its name is <tt>-</tt>, then characters are read on standard
+input.</p>
+
+<h3>Operation modes</h3>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>--help</td>
+<td>display an help message and exit</td>
+</tr>
+
+<tr valign="top">
+<td>--version</td>
+<td>output <b>mp4h</b> version information and exit</td>
+</tr>
+
+<tr valign="top">
+<td>-E --fatal-warnings</td>
+<td>stop execution after first warning</td>
+</tr>
+
+<tr valign="top">
+<td>-Q --quiet --silent</td>
+<td>suppress some warnings for builtins</td>
+</tr>
+
+<tr valign="top">
+<td>-S --safety-level=<tt>NUMBER</tt></td>
+<td>disable risky functions; 0 means no filtering, 1 disable
+<tt>execute</tt> and 2 disable this one too plus all filesystem
+related functions: <tt>file-exists</tt>, <tt>real-path</tt>,
+<tt>get-file-properties</tt>, <tt>directory-contents</tt> and
+<tt>include</tt>.</td>
+</tr>
+</table>
+
+<h3>Preprocessor features</h3>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>-I --include=<tt>DIRECTORY</tt></td>
+<td>search this directory for includes and packages</td>
+</tr>
+
+<tr valign="top">
+<td>-D --define=<tt>NAME[=VALUE]</tt></td>
+<td>set variable NAME to VALUE, or empty</td>
+</tr>
+
+<tr valign="top">
+<td>-U --undefine=<tt>COMMAND</tt></td>
+<td>delete builtin COMMAND</td>
+</tr>
+
+<tr valign="top">
+<td>-s --synclines</td>
+<td>generate `#line NO "FILE"' lines</td>
+</tr>
+</table>
+
+<h3>Parser features</h3>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>-c --caseless=<tt>NUMBER</tt></td>
+<td>set case sensitiveness according to the bits of
+<tt>NUMBER</tt>. A null bit means symbol is case sensitive, and
+bits are defined as followed: 0 for tags, 1 for variables and 2 for
+entities. Default value is 3, i.e. only entities are case
+sensitive.</td>
+</tr>
+
+<tr valign="top">
+<td>-e --encoding=<tt>NAME</tt></td>
+<td>specify document encoding. Valid options are `8bit' (default)
+or `utf8'.</td>
+</tr>
+
+<tr valign="top">
+<td>-X --expansion=<tt>NUMBER</tt></td>
+<td>set parser behaviour according to the bits of
+<tt>NUMBER</tt></td>
+</tr>
+</table>
+
+<p>NUMBER is a combination of</p>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>1</td>
+<td>do not parse unknown tags</td>
+</tr>
+
+<tr valign="top">
+<td>2</td>
+<td>unknown tags are assumed being simple</td>
+</tr>
+
+<tr valign="top">
+<td>4</td>
+<td>trailing star in tag name do not make this tag simple</td>
+</tr>
+
+<tr valign="top">
+<td>8</td>
+<td>an unmatched end tag closes all previous unmatched begin
+tags</td>
+</tr>
+
+<tr valign="top">
+<td>16</td>
+<td>interpret backslashes as printf</td>
+</tr>
+
+<tr valign="top">
+<td>32</td>
+<td>remove trailing slash in tag attributes</td>
+</tr>
+
+<tr valign="top">
+<td>64</td>
+<td>do not remove trailing star in tag name</td>
+</tr>
+
+<tr valign="top">
+<td>128</td>
+<td>do not remove leading star in tag name</td>
+</tr>
+
+<tr valign="top">
+<td>256</td>
+<td>do not add a space before trailing slash in tag attributes</td>
+</tr>
+
+<tr valign="top">
+<td>1024</td>
+<td>suppress warnings about bad nested tags</td>
+</tr>
+
+<tr valign="top">
+<td>2048</td>
+<td>suppress warnings about missing trailing slash</td>
+</tr>
+</table>
+
+<p>In version 1.3.0, default value is 3114=2+8+32+1024+2048.</p>
+
+<h3>Limits control</h3>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>-H --hashsize=<tt>PRIME</tt></td>
+<td>set symbol lookup hash table size (default 509)</td>
+</tr>
+
+<tr valign="top">
+<td>-L -nesting-limit=<tt>NUMBER</tt></td>
+<td>change artificial nesting limit (default 250)</td>
+</tr>
+</table>
+
+<h3>Debugging</h3>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>-d --debug=<tt>FLAGS</tt></td>
+<td>set debug level (no FLAGS implies `aeq')</td>
+</tr>
+
+<tr valign="top">
+<td>-t --trace=<tt>NAME</tt></td>
+<td>trace NAME when it will be defined</td>
+</tr>
+
+<tr valign="top">
+<td>-l --arglength=<tt>NUMBER</tt></td>
+<td>restrict macro tracing size</td>
+</tr>
+
+<tr valign="top">
+<td>-o --error-output=<tt>FILE</tt></td>
+<td>redirect debug and trace output</td>
+</tr>
+</table>
+
+<p>Flags are any of:</p>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>t</td>
+<td>trace for all macro calls, not only debugging-on'ed</td>
+</tr>
+
+<tr valign="top">
+<td>a</td>
+<td>show actual arguments</td>
+</tr>
+
+<tr valign="top">
+<td>e</td>
+<td>show expansion</td>
+</tr>
+
+<tr valign="top">
+<td>c</td>
+<td>show before collect, after collect and after call</td>
+</tr>
+
+<tr valign="top">
+<td>x</td>
+<td>add a unique macro call id, useful with c flag</td>
+</tr>
+
+<tr valign="top">
+<td>f</td>
+<td>say current input file name</td>
+</tr>
+
+<tr valign="top">
+<td>l</td>
+<td>say current input line number</td>
+</tr>
+
+<tr valign="top">
+<td>p</td>
+<td>show results of path searches</td>
+</tr>
+
+<tr valign="top">
+<td>m</td>
+<td>show results of module operations</td>
+</tr>
+
+<tr valign="top">
+<td>i</td>
+<td>show changes in input files</td>
+</tr>
+
+<tr valign="top">
+<td>V</td>
+<td>shorthand for all of the above flags</td>
+</tr>
+</table>
+
+<h2>Description</h2>
+
+<p>The <b>mp4h</b> software is a macro-processor, which means that
+keywords are replaced by other text. This chapter describes all
+primitives. As <b>mp4h</b> has been specially designed for HTML
+documents, its syntax is very similar to HTML, with tags and
+attributes. One important feature has no equivalent in HTML:
+comments until end of line. All text following three colons is
+discarded until end of line, like</p>
+
+<pre>
+;;;  This is a comment
+</pre>
+
+<h3>Function Macros</h3>
+
+<p><b>Note:</b> All examples in this documentation are processed
+through <b>mp4h</b> with expansion flags set to zero (see a
+description of possible expansion flags at the end of document), it
+is why simple tags contain a trailing slash. But <b>mp4h</b> can
+output plain HTML files with other expansion flags.</p>
+
+<p>The definition of new tags is the most common task provided by
+<b>mp4h</b>. As with HTML, macro names are case insensitive, unless
+<tt>-c</tt> option is used to change this default behaviour. In
+this documentation, only lowercase letters are used. There are two
+kinds of tags: simple and complex. A simple tag has the following
+form:</p>
+
+<pre>
+&lt;name [attributes] /&gt;
+</pre>
+
+whereas a complex tag looks like: 
+
+<pre>
+&lt;name [attributes]&gt;
+body
+&lt;/name&gt;
+</pre>
+
+<p>Since version 0.9.1, <b>mp4h</b> knows XHTML syntax too, so your
+input file may conform to HTML or XHTML syntax. In this manual, we
+adopt the latter, which is why simple tags have a trailing slash in
+attributes. If you want to produce HTML files with this input file,
+you may either choose an adequate <tt>--expansion</tt> flag or use
+a post-processor like <a href=
+"http://www.w3.org/People/Raggett/tidy/"><tt>tidy</tt></a>.</p>
+
+<p>When a simple tag is defined by <b>mp4h</b>, it can be parsed
+even if the trailing slash is omitted, because <b>mp4h</b> knows
+that this tag is simple. But it is a good practice to always append
+a trailing slash to simple tags.</p>
+
+<p><a name="noteattr">&nbsp;</a> In macro descriptions below, a
+slash indicates a simple tag, and a V letter that attributes are
+read verbatim (without expansion) (see the chapter on macro
+expansion for further details).</p>
+
+<p><a name="tag-define-tag">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `define-tag' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">define-tag</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[attributes=verbatim]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[endtag=required]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[whitespace=delete]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This function lets you define your own tags. First argument is
+the command name. Replacement text is the function body.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo&gt;bar&lt;/define-tag&gt;
+&lt;foo/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+bar
+</pre>
+</td>
+</tr>
+</table>
+
+<p>Even if spaces have usually few incidence on HTML syntax, it is
+important to note that</p>
+
+<pre>
+&lt;define-tag foo&gt;bar&lt;/define-tag&gt;
+</pre>
+
+and 
+
+<pre>
+&lt;define-tag foo&gt;
+bar
+&lt;/define-tag&gt;
+</pre>
+
+are not equivalent, the latter form contains two newlines that were
+not present in the former. 
+
+<ul>
+<li><tt>whitespace=delete</tt><br>
+ Some spaces are suppressed in replacement text, in particular any
+leading or trailing spaces, and newlines not enclosed within angle
+brackets.</li>
+
+<li><tt>endtag=required</tt><br>
+ Define a complex tag 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo&gt;bar&lt;/define-tag&gt;
+&lt;foo/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+bar
+</pre>
+</td>
+</tr>
+</table>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag bar endtag=required&gt;;;;
+body is: %body&lt;/define-tag&gt;
+&lt;bar&gt;Here it is&lt;/bar&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+body is: Here it is
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li><tt>attributes=verbatim</tt><br>
+ By default attributes are expanded before text is replaced. If
+this attribute is used, attributes are inserted into replacement
+text without expansion. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo&gt;quux&lt;/define-tag&gt;
+&lt;define-tag bar attributes=verbatim endtag=required&gt;
+Body: %Ubody
+Attributes: %Uattributes
+&lt;/define-tag&gt;
+&lt;bar txt="&lt;foo/&gt;"&gt;Here we go&lt;/bar&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Body: Here we go
+Attributes: txt=&lt;foo/&gt;
+</pre>
+</td>
+</tr>
+</table>
+</li>
+</ul>
+
+<p><a name="tag-provide-tag">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `provide-tag' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">provide-tag</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[attributes=verbatim]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[endtag=required]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[whitespace=delete]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This command is similar to the previous one, except that no
+operation is performed if this command was already defined.</p>
+
+<p><a name="tag-let">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `let' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">let</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>new</em>=<em>old</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Copy a function. This command is useful to save a macro
+definition before redefining it.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo&gt;one&lt;/define-tag&gt;
+&lt;let bar=foo /&gt;
+&lt;define-tag foo&gt;two&lt;/define-tag&gt;
+&lt;foo/&gt;&lt;bar/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+twoone
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-undef">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `undef' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">undef</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Delete a command definition.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo&gt;one&lt;/define-tag&gt;
+&lt;undef foo /&gt;
+&lt;foo/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;foo /&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-set-hook">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `set-hook' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">set-hook</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[position=before|after]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[action=insert|append|replace]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Add text to a predefined macro. This mechanism allows
+modifications of existing macros without having to worry about its
+type, whether it is complex or not.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;let foo=add /&gt;
+&lt;set-hook foo position=before&gt;
+Before&lt;/set-hook&gt;
+&lt;set-hook foo position=after&gt;
+After&lt;/set-hook&gt;
+&lt;foo 1 2 3 4 /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Before10
+After
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-get-hook">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `get-hook' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">get-hook</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[position=before|after]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Print current hooks of a macro.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+Text inserted with position=before:&lt;get-hook foo position=before /&gt;!
+Text inserted with position=after:&lt;get-hook foo position=after /&gt;!
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Text inserted with position=before:
+Before!
+Text inserted with position=after:
+After!
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-attributes-quote">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `attributes-quote' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">attributes-quote</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>%attributes</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Like <tt>%attributes</tt>, except that <tt>attr=value</tt> pairs
+are printed with double quotes surrounding attribute values, and a
+leading space is added if some text is printed.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo&gt;;;;
+%attributes
+&lt;img&lt;attributes-quote %attributes /&gt;/&gt;
+&lt;/define-tag&gt;
+&lt;foo id="logo" src="logo.gif" name="Logo" alt="Our logo" /&gt;
+&lt;foo/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+id=logo src=logo.gif name=Logo alt=Our logo
+&lt;img id="logo" src="logo.gif" name="Logo" alt="Our logo"/&gt;
+
+
+&lt;img/&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-attributes-extract">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `attributes-extract' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">attributes-extract</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[,<em>name2</em>[,<em>name3</em>...]]</tt></td>
+</tr>
+
+<tr>
+<td><tt>%attributes</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Extract from <tt>%attributes</tt> the <tt>attr=value</tt> pairs
+for names matching any of <em>name1</em>, <em>name2</em>....</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag img whitespace=delete&gt;
+&lt;img* &lt;attributes-extract name,src,alt %attributes /&gt;  /&gt;
+&lt;/define-tag&gt;
+&lt;img id="logo" src="logo.gif" name="Logo" alt="Our logo"  /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;img src=logo.gif name=Logo alt=Our logo    /&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-attributes-remove">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `attributes-remove' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">attributes-remove</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[,<em>name2</em>[,<em>name3</em>...]]</tt></td>
+</tr>
+
+<tr>
+<td><tt>%attributes</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Remove from <tt>%attributes</tt> the <tt>attr=value</tt> pairs
+for names matching any of <em>name1</em>, <em>name2</em>....</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag img whitespace=delete&gt;
+&lt;img* &lt;attributes-quote &lt;attributes-remove name,src,alt %attributes /&gt;/&gt; /&gt;
+&lt;/define-tag&gt;
+&lt;img id="logo" src="logo.gif" name="Logo" alt="Our logo"  /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;img  id="logo"   /&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p><b>Note:</b> The two previous functions are special, because
+unlike all other macros, their expansion do not form a group. This
+is necessary to parse the resulting list of attributes.</p>
+
+<p>In those two functions, names of attributes may be regular
+expressions. Main goal of these primitives is to help writing
+macros accepting any kind of attributes without having to declare
+them. A canonical example is</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag href whitespace=delete&gt;
+&lt;preserve url name /&gt;
+&lt;set-var &lt;attributes-extract url,name %attributes /&gt;/&gt;
+&lt;a &lt;attributes-quote &lt;attributes-remove url,name %attributes /&gt;/&gt;
+   href="&lt;get-var url /&gt;"&gt;&lt;get-var name /&gt;&lt;/a&gt;
+&lt;restore  url name /&gt;
+&lt;/define-tag&gt;
+&lt;href class=web url="http://www.foo.com" name="Welcome"  /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;a  class="web"
+   href="http://www.foo.com"&gt;Welcome&lt;/a&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p>But we want now to add an image attribute. So we may write</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag href whitespace=delete&gt;
+&lt;preserve url name image /&gt;
+&lt;set-var &lt;attributes-extract url,name,image %attributes /&gt;/&gt;
+&lt;a &lt;attributes-quote &lt;attributes-remove url,name,image %attributes /&gt;/&gt;
+   href="&lt;get-var url /&gt;"&gt;
+&lt;if &lt;get-var image /&gt;
+   &lt;img &lt;attributes-quote &lt;attributes-remove url,name,image %attributes /&gt;/&gt;
+      src="&lt;get-var image /&gt;" alt="&lt;get-var name /&gt;" border=0  /&gt;
+  &lt;get-var name /&gt;
+/&gt;
+&lt;/a&gt;
+&lt;restore  url name image /&gt;
+&lt;/define-tag&gt;
+&lt;href class=web url="http://www.foo.com" name="Welcome" image="foo.png"/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;a  class="web"
+   href="http://www.foo.com"&gt;&lt;img  class="web"
+      src="foo.png" alt="Welcome" border=0      /&gt;&lt;/a&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p>We need a mechanism to tell <b>mp4h</b> that some attributes
+refer to specific HTML tags. A solution is to prepend attribute
+with tag name, e.g.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag href whitespace=delete&gt;
+&lt;preserve url name image /&gt;
+&lt;set-var &lt;attributes-extract url,name,image %attributes /&gt;/&gt;
+&lt;a &lt;attributes-quote &lt;attributes-extract a:.* %attributes /&gt;/&gt;
+   href="&lt;get-var url /&gt;"&gt;
+&lt;if &lt;get-var image /&gt;
+   &lt;img &lt;attributes-quote &lt;attributes-extract img:.* %attributes /&gt;/&gt;
+      src="&lt;get-var image /&gt;" alt="&lt;get-var name /&gt;"  /&gt;
+  &lt;get-var name /&gt;
+/&gt;
+&lt;/a&gt;
+&lt;restore  url name image /&gt;
+&lt;/define-tag&gt;
+&lt;href a:class=web img:id=logo img:border=1
+      url="http://www.foo.com" name="Welcome" image="foo.png" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;a  a:class="web"
+   href="http://www.foo.com"&gt;&lt;img  img:id="logo" img:border="1"
+      src="foo.png" alt="Welcome"      /&gt;&lt;/a&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p>This example shows that regular expressions may be used within
+attributes names, but it is still incomplete, because we want to
+remove prefix from attributes. One solution is with
+<tt>subst-in-string</tt>, but there is a more elegant one:</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag href whitespace=delete&gt;
+&lt;preserve url name image /&gt;
+&lt;set-var &lt;attributes-extract url,name,image %attributes /&gt;/&gt;
+&lt;a &lt;attributes-quote &lt;attributes-extract :a:(.*) %attributes /&gt;/&gt;
+   href="&lt;get-var url /&gt;"&gt;
+&lt;if &lt;get-var image /&gt;
+   &lt;img &lt;attributes-quote &lt;attributes-extract :img:(.*) %attributes /&gt;/&gt;
+      src="&lt;get-var image /&gt;" alt="&lt;get-var name /&gt;"  /&gt;
+  &lt;get-var name /&gt;
+/&gt;
+&lt;/a&gt;
+&lt;restore  url name image /&gt;
+&lt;/define-tag&gt;
+&lt;href :a:class=web :img:id=logo :img:border=1
+      url="http://www.foo.com" name="Welcome" image="foo.png" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;a  class="web"
+   href="http://www.foo.com"&gt;&lt;img  id="logo" border="1"
+      src="foo.png" alt="Welcome"      /&gt;&lt;/a&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p>When there are subexpressions within regular expressions, they
+are printed instead of the whole expression. Note also that i put a
+colon before the prefix in order not to mix them with XML
+namespaces.</p>
+
+<h3>Entities</h3>
+
+<p>Entities are macros in the same way as tags, but they do not
+take any arguments. Whereas tags are normally used to mark up text,
+entities contain already marked up text. Also note that unlike
+tags, entities are by default case sensitive.</p>
+
+<p>An entity has the following form:</p>
+
+<pre>
+&amp;entity;
+</pre>
+
+<p><a name="tag-define-entity">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `define-entity' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">define-entity</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This function lets you define your own entities. First argument
+is the entity name. Replacement text is the function body.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-entity foo&gt;bar&lt;/define-entity&gt;
+&amp;foo;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+bar
+</pre>
+</td>
+</tr>
+</table>
+
+<h3>Variables</h3>
+
+<p>Variables are a special case of simple tags, because they do not
+accept attributes. In fact their use is different, because
+variables contain text whereas macros act like operators. A nice
+feature concerning variables is their manipulation as arrays.
+Indeed variables can be considered like newline separated lists,
+which will allow powerful manipulation functions as we will see
+below.</p>
+
+<p><a name="tag-set-var">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `set-var' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">set-var</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em>[=<em>value</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>[=<em>value</em>]] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This command sets variables.</p>
+
+<p><a name="tag-set-var-verbatim">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `set-var-verbatim' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">set-var-verbatim</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em>[=<em>value</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>[=<em>value</em>]] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>As above but attributes are read verbatim.</p>
+
+<p><a name="tag-set-var-x">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `set-var-x' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">set-var-x</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>name=<em>variable-name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This command assigns a variable the value of the body of the
+command. This is particularly useful when variable values contain
+newlines and/or quotes.</p>
+
+<p>Note that the variable can not be indexed with this command.
+Note also, that this command behaves as set-var-verbatim: The body
+is not expanded until the variable is shown with get-var.</p>
+
+<p><a name="tag-get-var">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `get-var' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">get-var</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Show variable contents. If a numeric value within square
+brackets is appended to a variable name, it represents the index of
+an array. The first index of arrays is 0 by convention.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var version="0.10.1" /&gt;
+This is version &lt;get-var version /&gt;
+&lt;set-var-x name="osversion"&gt;Operating sytem is
+"&lt;include command="uname" /&gt;&lt;include command="uname -r" /&gt;"&lt;/set-var-x&gt;
+&lt;get-var osversion /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+This is version 0.10.1
+
+Operating sytem is
+"Linux
+3.18.9-hardened
+"
+</pre>
+</td>
+</tr>
+</table>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var foo="0
+1
+2
+3" /&gt;
+&lt;get-var foo[2] foo[0] foo /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+200
+1
+2
+3
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-get-var-once">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `get-var-once' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">get-var-once</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>As above but attributes are not expanded.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo&gt;0.10.1&lt;/define-tag&gt;
+&lt;set-var version="&lt;foo/&gt;" /&gt;;;;
+Here is version &lt;get-var version /&gt;
+&lt;set-var-verbatim version="&lt;foo/&gt;" /&gt;;;;
+Here is version &lt;get-var version /&gt;
+&lt;set-var-verbatim version="&lt;foo/&gt;" /&gt;;;;
+Here is version &lt;get-var-once version /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Here is version 0.10.1
+Here is version 0.10.1
+Here is version &lt;foo/&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-preserve">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `preserve' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">preserve</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>All variables are global, there is no variable or macro scope.
+For this reason a stack is used to preserve variables. When this
+command is invoked, arguments are names of variables, whose values
+are put at the top of the stack and variables are reset to an empty
+string.</p>
+
+<p><a name="tag-restore">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `restore' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">restore</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This is the opposite: arguments are names of variables, which
+are set to the value found at the top of the stack, and stack is
+popped down.</p>
+
+<p><b>Note:</b> The <tt>preserve</tt> tag pushes its last argument
+first, whereas <tt>restore</tt> first pops its first argument.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo whitespace=delete&gt;
+&lt;preserve src name text /&gt;
+&lt;set-var %attributes /&gt;
+Inside: src=&lt;get-var src /&gt; name=&lt;get-var name /&gt; text=&lt;get-var text /&gt;
+&lt;restore  src name text /&gt;
+&lt;/define-tag&gt;
+&lt;set-var src=foo.png text="Hello, World!" /&gt;
+Before: src=&lt;get-var src /&gt; name=&lt;get-var name /&gt; text=&lt;get-var text /&gt;
+&lt;foo src=bar name=quux /&gt;
+After: src=&lt;get-var src /&gt; name=&lt;get-var name /&gt; text=&lt;get-var text /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Before: src=foo.png name= text=Hello, World!
+Inside: src=bar name=quux text=
+After: src=foo.png name= text=Hello, World!
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-unset-var">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `unset-var' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">unset-var</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Undefine variables.</p>
+
+<p><a name="tag-var-exists">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `var-exists' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">var-exists</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> when this variable exists.</p>
+
+<p><a name="tag-increment">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `increment' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">increment</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[by=<em>value</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Increment the variable whose name is the first argument. Default
+increment is one.</p>
+
+<ul>
+<li><tt>by=<em>value</em></tt><br>
+ Change increment amount.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var i=10 /&gt;
+&lt;get-var i /&gt;
+&lt;increment i /&gt;&lt;get-var i /&gt;
+&lt;increment i by="-3" /&gt;&lt;get-var i /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+10
+11
+8
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-decrement">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `decrement' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">decrement</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[by=<em>value</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Decrement the variable whose name is the first argument. Default
+decrement is one.</p>
+
+<ul>
+<li><tt>by=<em>value</em></tt><br>
+ Change decrement amount.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var i=10 /&gt;
+&lt;get-var i /&gt;
+&lt;decrement i /&gt;&lt;get-var i /&gt;
+&lt;decrement i by="3" /&gt;&lt;get-var i /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+10
+9
+6
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-copy-var">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `copy-var' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">copy-var</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>src</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>dest</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Copy a variable into another.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var i=10 /&gt;
+&lt;copy-var i j /&gt;
+&lt;get-var j /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+10
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-defvar">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `defvar' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">defvar</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>value</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>If this variable is not defined or is defined to an empty
+string, then it is set to the second argument.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;unset-var title /&gt;
+&lt;defvar title "Title" /&gt;&lt;get-var title /&gt;
+&lt;defvar title "New title" /&gt;&lt;get-var title /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Title
+Title
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-symbol-info">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `symbol-info' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">symbol-info</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Show informations on symbols. If it is a variable name, the
+<tt>STRING</tt> word is printed as well as the number of lines
+contained within this variable. If it is a macro name, one of the
+following messages is printed: <tt>PRIM COMPLEX</tt>, <tt>PRIM
+TAG</tt>, <tt>USER COMPLEX</tt> or <tt>USER TAG</tt></p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var x="0\n1\n2\n3\n4" /&gt;
+&lt;define-tag foo&gt;bar&lt;/define-tag&gt;
+&lt;define-tag bar endtag=required&gt;quux&lt;/define-tag&gt;
+&lt;symbol-info x /&gt;
+&lt;symbol-info symbol-info /&gt;
+&lt;symbol-info define-tag /&gt;
+&lt;symbol-info foo /&gt;
+&lt;symbol-info bar /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+STRING
+5
+PRIM TAG
+PRIM COMPLEX
+USER TAG
+USER COMPLEX
+</pre>
+</td>
+</tr>
+</table>
+
+<h3>String Functions</h3>
+
+<p><a name="tag-string-length">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `string-length' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">string-length</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints the length of the string.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var foo="0
+1
+2
+3" /&gt;;;;
+&lt;string-length &lt;get-var foo /&gt; /&gt;
+&lt;set-var foo="0 1 2 3" /&gt;;;;
+&lt;set-var l=&lt;string-length &lt;get-var foo /&gt; /&gt; /&gt;;;;
+&lt;get-var l /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+7
+7
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-downcase">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `downcase' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">downcase</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Convert to lowercase letters.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;downcase "Does it work?" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+does it work?
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-upcase">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `upcase' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">upcase</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Convert to uppercase letters.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;upcase "Does it work?" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+DOES IT WORK?
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-capitalize">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `capitalize' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">capitalize</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Convert to a title, with a capital letter at the beginning of
+every word.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;capitalize "Does it work?" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Does It Work?
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-substring">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `substring' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">substring</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>start</em> [<em>end</em>]]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Extracts a substring from a string. First argument is original
+string, second and third are respectively start and end indexes. By
+convention first character has a null index.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var foo="abcdefghijk" /&gt;
+&lt;substring &lt;get-var foo /&gt; 4 /&gt;
+&lt;substring &lt;get-var foo /&gt; 4 6 /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+efghijk
+ef
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-string-eq">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `string-eq' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">string-eq</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>string2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> if first two arguments are equal.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;string-eq "aAbBcC" "aabbcc" /&gt;
+2:&lt;string-eq "aAbBcC" "aAbBcC" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:
+2:true
+</pre>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>caseless=true</tt><br>
+ Comparison is case insensitive.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;string-eq "aAbBcC" "aabbcc" caseless=true /&gt;
+2:&lt;string-eq "aAbBcC" "aAbBcC" caseless=true /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:true
+2:true
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-string-neq">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `string-neq' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">string-neq</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>string2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> if the first two arguments are not
+equal.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;string-neq "aAbBcC" "aabbcc" /&gt;
+2:&lt;string-neq "aAbBcC" "aAbBcC" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:true
+2:
+</pre>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>caseless=true</tt><br>
+ Comparison is case insensitive.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;string-neq "aAbBcC" "aabbcc" caseless=true /&gt;
+2:&lt;string-neq "aAbBcC" "aAbBcC" caseless=true /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:
+2:
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-string-compare">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `string-compare' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">string-compare</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>string2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Compares two strings and returns one of the values less, greater
+or equal depending on this comparison.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;string-compare "aAbBcC" "aabbcc" /&gt;
+2:&lt;string-compare "aAbBcC" "aAbBcC" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:less
+2:equal
+</pre>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>caseless=true</tt><br>
+ Comparison is case insensitive.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;string-compare "aAbBcC" "aabbcc" caseless=true /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:equal
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-char-offsets">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `char-offsets' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">char-offsets</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>character</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints an array containing indexes where the character appear in
+the string.</p>
+
+<ul>
+<li><tt>caseless=true</tt><br>
+ Comparison is case insensitive.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;char-offsets "abcdAbCdaBcD" a /&gt;
+2:&lt;char-offsets "abcdAbCdaBcD" a caseless=true /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:0
+8
+2:0
+4
+8
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-printf">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `printf' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">printf</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>format</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>string</em> ...]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints according to a given format. Currently only the
+<tt>%s</tt> flag character is recognized, and <tt>$</tt> extension
+is supported to change order of arguments.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;printf "foo %s bar %s" baz 10 /&gt;
+2:&lt;printf "foo %2$s bar %1$s" baz 10 /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:foo baz bar 10
+2:foo 10 bar baz
+</pre>
+</td>
+</tr>
+</table>
+
+<h3>Regular Expressions</h3>
+
+<p>Regular expression support is provided by the PCRE (Perl
+Compatible Regular Expressions) library package, which is open
+source software, copyright by the University of Cambridge. This is
+a very nice piece of software, latest versions are available at <a
+href=
+"ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/"><tt>ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/</tt></a>.</p>
+
+<p>Before version 1.0.6, POSIX regular expressions were
+implemented. For this reason, the following macros recognize two
+attributes, <tt>caseless=true</tt> and
+<tt>singleline=true|false</tt>. But Perl allows a much better
+control on regular expressions with so called modifiers, which are
+assed to the new <tt>reflags</tt> attribute. It may contain one or
+more modifiers:</p>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>i</td>
+<td>Matching is case insensitive</td>
+</tr>
+
+<tr valign="top">
+<td>m</td>
+<td>Treat string as multiple lines. When set, a <tt>^</tt> matches
+any beginning of line, and <tt>$</tt> any end of line. By default,
+they match begin and end of string.</td>
+</tr>
+
+<tr valign="top">
+<td>s</td>
+<td>Treat string as single line. A dot (<tt>.</tt>) may also match
+a newline, whereas it does not by default.</td>
+</tr>
+
+<tr valign="top">
+<td>x</td>
+<td>Allow formatted regular expression, that means whitespaces,
+newlines and comments are removed from regular expression before
+processing.</td>
+</tr>
+</table>
+
+<p><b>Note:</b> Attribute <tt>singleline=true</tt> is a synonym for
+the <tt>s</tt> modifier, whereas <tt>singleline=false</tt> is a
+synonym for the <tt>m</tt> modifier. This behaviour was different
+up to <b>mp4h</b> 1.0.6.</p>
+
+<p><a name="tag-subst-in-string">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `subst-in-string' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">subst-in-string</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>regexp</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>replacement</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[singleline=true|false]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[reflags=[imsx]]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Replace a regular expression in a string by a replacement
+text.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var foo="abcdefghijk" /&gt;
+&lt;subst-in-string &lt;get-var foo /&gt; "[c-e]" /&gt;
+&lt;subst-in-string &lt;get-var foo /&gt; "([c-e])" "\\1 " /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+abfghijk
+abc d e fghijk
+</pre>
+</td>
+</tr>
+</table>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var foo="abcdefghijk\nabcdefghijk\nabcdefghijk" /&gt;
+&lt;subst-in-string &lt;get-var foo /&gt; ".$" "" /&gt;
+&lt;subst-in-string &lt;get-var foo /&gt; ".$" "" singleline=false /&gt;
+&lt;subst-in-string &lt;get-var foo /&gt; "
+   ([a-c]) | [0-9]
+     " ":\\1:" reflags=x /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+abcdefghijk
+abcdefghijk
+abcdefghij
+abcdefghij
+abcdefghij
+abcdefghij
+:a::b::c:defghijk
+:a::b::c:defghijk
+:a::b::c:defghijk
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-subst-in-var">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `subst-in-var' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">subst-in-var</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>regexp</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>replacement</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[singleline=true|false]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[reflags=[imsx]]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Performs substitutions inside variable content.</p>
+
+<p><a name="tag-match">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `match' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">match</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>regexp</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[singleline=true|false]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[reflags=[imsx]]</tt></td>
+</tr>
+
+<tr>
+<td>
+<tt>[action=report|extract|delete|startpos|endpos|length]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>action=report</tt><br>
+ Prints <tt>true</tt> if string contains regexp.</li>
+
+<li><tt>action=extract</tt><br>
+ Prints the expression matching regexp in string.</li>
+
+<li><tt>action=delete</tt><br>
+ Prints the string without the expression matching regexp in
+string.</li>
+
+<li><tt>action=startpos</tt><br>
+ Prints the first char of the expression matching regexp in string.
+If there is no match, returns <tt>-1</tt>.</li>
+
+<li><tt>action=endpos</tt><br>
+ Prints the last char of the expression matching regexp in string.
+If there is no match, returns <tt>-1</tt>.</li>
+
+<li><tt>action=length</tt><br>
+ Prints the length of the expression matching regexp in
+string.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+1:&lt;match "abcdefghijk" "[c-e]+" /&gt;
+2:&lt;match "abcdefghijk" "[c-e]+" action=extract /&gt;
+3:&lt;match "abcdefghijk" "[c-e]+" action=delete /&gt;
+4:&lt;match "abcdefghijk" "[c-e]+" action=startpos /&gt;
+5:&lt;match "abcdefghijk" "[c-e]+" action=endpos /&gt;
+6:&lt;match "abcdefghijk" "[c-e]+" action=length /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1:true
+2:cde
+3:abfghijk
+4:2
+5:5
+6:3
+</pre>
+</td>
+</tr>
+</table>
+
+<h3>Arrays</h3>
+
+<p>With <b>mp4h</b> one can easily deal with string arrays.
+Variables can be treated as a single value or as a newline
+separated list of strings. Thus after defining</p>
+
+<pre>
+&lt;set-var digits="0
+1
+2
+3" /&gt;
+</pre>
+
+one can view its content or one of these values: 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;get-var digits /&gt;
+&lt;get-var digits[2] /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+0
+1
+2
+3
+2
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-array-size">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `array-size' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">array-size</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns an array size which is the number of lines present in
+the variable.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;array-size digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+4
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-array-push">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `array-push' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">array-push</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>value</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Add a value (or more if this value contains newlines) at the end
+of an array.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;array-push digits "10\n11\n12" /&gt;
+&lt;get-var digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+0
+1
+2
+3
+10
+11
+12
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-array-pop">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `array-pop' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">array-pop</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Remove the toplevel value of an array and returns this
+string.</p>
+
+<p><a name="tag-array-topvalue">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `array-topvalue' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">array-topvalue</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints the last entry of an array.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;array-topvalue digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+12
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-array-add-unique">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `array-add-unique' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">array-add-unique</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>value</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Add a value at the end of an array if this value is not already
+present in this variable.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;array-add-unique digits 2 /&gt;
+&lt;get-var digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+0
+1
+2
+3
+10
+11
+12
+</pre>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>caseless=true</tt><br>
+ Comparison is case insensitive.</li>
+</ul>
+
+<p><a name="tag-array-concat">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `array-concat' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">array-concat</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name2</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Concatenates all arrays into the first one.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var foo="foo" /&gt;
+&lt;set-var bar="bar" /&gt;
+&lt;array-concat foo bar /&gt;&lt;get-var foo /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+foo
+bar
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-array-member">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `array-member' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">array-member</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>value</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>If value is contained in array, returns its index otherwise
+returns -1.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;array-member digits 11 /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+5
+</pre>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>caseless=true</tt><br>
+ Comparison is case insensitive.</li>
+</ul>
+
+<p><a name="tag-array-shift">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `array-shift' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">array-shift</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>offset</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[start=<em>start</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Shifts an array. If offset is negative, indexes below 0 are
+lost. If offset is positive, first indexes are filled with empty
+strings.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;array-shift digits 2 /&gt;
+Now: &lt;get-var digits /&gt;
+&lt;array-shift digits -4 /&gt;
+And: &lt;get-var digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Now: 
+
+0
+1
+2
+3
+10
+11
+12
+
+And: 2
+3
+10
+11
+12
+</pre>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>start=<em>start</em></tt><br>
+ Change origin of shifts (default is 0). 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;array-shift digits -2 start=2 /&gt;&lt;get-var digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+2
+3
+12
+</pre>
+</td>
+</tr>
+</table>
+</li>
+</ul>
+
+<p><a name="tag-sort">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `sort' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">sort</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[caseless=true]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[numeric=true]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[sortorder=reverse]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Sort lines of an array in place. Default is to sort lines
+alphabetically.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;sort digits /&gt;&lt;get-var digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+12
+2
+3
+</pre>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>caseless=true</tt><br>
+ Comparison is case insensitive.</li>
+
+<li><tt>numeric=true</tt><br>
+ Sort lines numerically 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;sort digits numeric=true /&gt;&lt;get-var digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+2
+3
+12
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li><tt>sortorder=reverse</tt><br>
+ Reverse sort order 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;sort digits numeric=true sortorder=reverse /&gt;;;;
+&lt;get-var digits /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+12
+3
+2
+</pre>
+</td>
+</tr>
+</table>
+</li>
+</ul>
+
+<h3>Numerical operators</h3>
+
+<p>These operators perform basic arithmetic operations. When all
+operands are integers result is an integer too, otherwise it is a
+float. These operators are self-explanatory.</p>
+
+<p><a name="tag-add">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `add' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">add</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>number3</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-substract">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `substract' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">substract</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>number3</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-multiply">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `multiply' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">multiply</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>number3</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-divide">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `divide' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">divide</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>number3</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-min">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `min' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">min</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>number3</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-max">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `max' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">max</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>number3</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;add 1 2 3 4 5 6 /&gt;
+&lt;add 1 2 3 4 5 6. /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+21
+21.000000
+</pre>
+</td>
+</tr>
+</table>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag factorial whitespace=delete&gt;
+&lt;ifeq %0 1 1 &lt;multiply %0 "&lt;factorial &lt;substract %0 1 /&gt; /&gt;" /&gt; /&gt;
+&lt;/define-tag&gt;
+&lt;factorial 6 /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+720
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-modulo">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `modulo' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">modulo</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Unlike functions listed above the modulo function cannot handle
+more than 2 arguments, and these arguments must be integers.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;modulo 345 7 /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+2
+</pre>
+</td>
+</tr>
+</table>
+
+<p>Those functions compare two numbers and returns <tt>true</tt>
+when this comparison is true. If one argument is not a number,
+comparison is false.</p>
+
+<p><a name="tag-gt">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `gt' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">gt</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> if first argument is greater than
+second.</p>
+
+<p><a name="tag-lt">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `lt' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">lt</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> if first argument is lower than
+second.</p>
+
+<p><a name="tag-eq">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `eq' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">eq</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> if arguments are equal.</p>
+
+<p><a name="tag-neq">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `neq' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">neq</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>number2</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> if arguments are not equal.</p>
+
+<h3>Relational operators</h3>
+
+<p><a name="tag-not">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `not' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">not</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> if string is empty, otherwise returns an
+empty string.</p>
+
+<p><a name="tag-and">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `and' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">and</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>string</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns the last argument if all arguments are non empty.</p>
+
+<p><a name="tag-or">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `or' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">or</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>string</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns the first non empty argument.</p>
+
+<h3>Flow functions</h3>
+
+<p><a name="tag-group">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `group' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">group</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>expression</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>expression</em>] ...</tt></td>
+</tr>
+
+<tr>
+<td><tt>[separator=<em>string</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This function groups multiple statements into a single one. Some
+examples will be seen below with conditional operations.</p>
+
+<p>A less intuitive but very helpful use of this macro is to
+preserve newlines when <tt>whitespace=delete</tt> is specified.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag text1&gt;
+Text on
+3 lines without
+whitespace=delete
+&lt;/define-tag&gt;
+&lt;define-tag text2 whitespace=delete&gt;
+Text on
+3 lines with
+whitespace=delete
+&lt;/define-tag&gt;
+&lt;define-tag text3 whitespace=delete&gt;
+&lt;group "Text on
+3 lines with
+whitespace=delete" /&gt;
+&lt;/define-tag&gt;
+&lt;text1/&gt;
+&lt;text2/&gt;
+&lt;text3/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Text on
+3 lines without
+whitespace=delete
+
+Text on3 lines withwhitespace=delete
+Text on
+3 lines with
+whitespace=delete
+</pre>
+</td>
+</tr>
+</table>
+
+<p>Note that newlines are suppressed in <tt>text2</tt> and result
+is certainly unwanted.</p>
+
+<p><a name="tag-compound">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `compound' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">compound</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>expression</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>expression</em>] ...</tt></td>
+</tr>
+
+<tr>
+<td><tt>[separator=<em>string</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Like <tt>group</tt>, but this tag is complex.</p>
+
+<ul>
+<li><tt>separator=<em>string</em></tt><br>
+ By default arguments are put aside. This attribute define a
+separator inserted between arguments.</li>
+</ul>
+
+<p><a name="tag-disjoin">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `disjoin' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">disjoin</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>expression</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Does the opposite job to <tt>group</tt>, its argument is no more
+treated as a single object when processed by another command.</p>
+
+<p><a name="tag-noexpand">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `noexpand' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">noexpand</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>command</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>command</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints its arguments without expansion. They will never be
+expanded unless the <tt>expand</tt> tag is used to cancel this
+<tt>noexpand</tt> tag.</p>
+
+<p><a name="tag-expand">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `expand' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">expand</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>command</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>command</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Cancels the <tt>noexpand</tt> tag.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;subst-in-string "=LT=define-tag foo&gt;bar=LT=/define-tag&gt;" "=LT=" "&lt;" /&gt;
+&lt;foo/&gt;
+&lt;subst-in-string "=LT=define-tag foo&gt;quux=LT=/define-tag&gt;" "=LT="
+   "&lt;noexpand "&lt;" /&gt;" /&gt;
+&lt;foo/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+bar
+&lt;define-tag foo&gt;quux&lt;/define-tag&gt;
+bar
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-if">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `if' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">if</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>then-clause</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>else-clause</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>If string is non empty, second argument is evaluated otherwise
+third argument is evaluated.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag test whitespace=delete&gt;
+&lt;if %0 "yes" "no" /&gt;
+&lt;/define-tag&gt;
+&lt;test "string" /&gt;
+&lt;test "" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+yes
+no
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-ifeq">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `ifeq' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">ifeq</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>string2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>then-clause</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>else-clause</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>If first two arguments are identical strings, third argument is
+evaluated otherwise fourth argument is evaluated.</p>
+
+<p><a name="tag-ifneq">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `ifneq' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">ifneq</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>string2</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>then-clause</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>else-clause</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>If first two arguments are not identical strings, third argument
+is evaluated otherwise fourth argument is evaluated.</p>
+
+<p><a name="tag-when">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `when' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">when</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>When argument is not empty, its body is evaluated.</p>
+
+<p><a name="tag-while">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `while' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">while</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>cond</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>While condition is true, body function is evaluated.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var i=10 /&gt;
+&lt;while &lt;gt &lt;get-var i /&gt; 0 /&gt;&gt;;;;
+  &lt;get-var i /&gt; &lt;decrement i /&gt;;;;
+&lt;/while&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+10 9 8 7 6 5 4 3 2 1
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-foreach">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `foreach' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">foreach</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>variable</em></tt></td>
+</tr>
+
+<tr>
+<td><tt><em>array</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[start=<em>start</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[end=<em>end</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[step=<em>pas</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This macro is similar to the <tt>foreach</tt> Perl's macro: a
+variable loops over array values and function body is evaluated for
+each value. first argument is a generic variable name, and second
+is the name of an array.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var x="1\n2\n3\n4\n5\n6" /&gt;
+&lt;foreach i x&gt;&lt;get-var i /&gt; &lt;/foreach&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1 2 3 4 5 6
+</pre>
+</td>
+</tr>
+</table>
+
+<ul>
+<li><tt>start=<em>start</em></tt><br>
+ Skips first indexes. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var x="1\n2\n3\n4\n5\n6" /&gt;
+&lt;foreach i x start=3&gt;&lt;get-var i /&gt; &lt;/foreach&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+4 5 6
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li><tt>end=<em>end</em></tt><br>
+ Stops after index has reached that value. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var x="1\n2\n3\n4\n5\n6" /&gt;
+&lt;foreach i x end=3&gt;&lt;get-var i /&gt; &lt;/foreach&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1 2 3
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li><tt>step=<em>step</em></tt><br>
+ Change index increment (default is 1). If step is negative, array
+is treated in reverse order. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var x="1\n2\n3\n4\n5\n6" /&gt;
+&lt;foreach i x step=2&gt;&lt;get-var i /&gt; &lt;/foreach&gt;
+&lt;foreach i x step=-2&gt;&lt;get-var i /&gt; &lt;/foreach&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+1 3 5 
+6 4 2
+</pre>
+</td>
+</tr>
+</table>
+</li>
+</ul>
+
+<p><a name="tag-var-case">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `var-case' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center"><a href="#noteattr"><tt>V</tt></a></td>
+<td align="center">var-case</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>var1</em>=<em>value1</em> <em>action1</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>var2</em>=<em>value2</em> <em>action2</em>
+...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This command performs multiple conditions with a single
+instruction.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var i=0 /&gt;
+&lt;define-tag test&gt;
+&lt;var-case
+  x=1   &lt;group &lt;increment i /&gt; x&lt;get-var i /&gt; /&gt;
+  x=2   &lt;group &lt;decrement i /&gt; x&lt;get-var i /&gt; /&gt;
+  y=1   &lt;group &lt;increment i /&gt; y&lt;get-var i /&gt; /&gt;
+  y=2   &lt;group &lt;decrement i /&gt; y&lt;get-var i /&gt; /&gt;
+/&gt;
+&lt;/define-tag&gt;
+&lt;set-var x=1 y=2 /&gt;&lt;test/&gt;
+&lt;set-var x=0 y=2 /&gt;&lt;test/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+x1y0
+
+
+y-1
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-break">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `break' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">break</td>
+<td></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Breaks the innermost <tt>while</tt> loop.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;set-var i=10 /&gt;
+&lt;while &lt;gt &lt;get-var i /&gt; 0 /&gt;&gt;;;;
+  &lt;get-var i /&gt; &lt;decrement i /&gt;;;;
+  &lt;ifeq &lt;get-var i /&gt; 5 &lt;break/&gt; /&gt;;;;
+&lt;/while&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+10 9 8 7 6
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-return">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `return' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">return</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[up=number]</tt></td>
+</tr>
+
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This command immediately exits from the innermost macro. A
+message may also be inserted. But this macro changes token parsing
+so its use may become very hazardous in some situations.</p>
+
+<ul>
+<li><tt>up=<em>number</em></tt><br>
+ This attribute determines how much levels have to be exited. By
+default only one level is skipped. With a null value, all current
+macros are exited from. A negative value do the same, and stops
+processing current file.</li>
+</ul>
+
+<p><a name="tag-warning">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `warning' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">warning</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints a warning on standard error.</p>
+
+<p><a name="tag-exit">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `exit' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">exit</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[status=<em>rc</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[message=<em>string</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Immediately exits program.</p>
+
+<ul>
+<li><tt>message=<em>string</em></tt><br>
+ Prints a message to the standard error.</li>
+
+<li><tt>status=<em>rc</em></tt><br>
+ Selects the code returned by the program (-1 by default).</li>
+</ul>
+
+<p><a name="tag-at-end-of-file">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `at-end-of-file' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">at-end-of-file</td>
+<td></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This is a special command: its content is stored and will be
+expanded after end of input.</p>
+
+<h3>File functions</h3>
+
+<p><a name="tag-directory-contents">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `directory-contents' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">directory-contents</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>dirname</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[matching=regexp]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns a newline separated list of files contained in a given
+directory.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;directory-contents . matching=".*\\.mp4h$" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+mp4h.mp4h
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-real-path">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `real-path' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">real-path</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>patname=<em>pathname</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Resolves all symbolic links, extra ``/'' characters and
+references to /./ and /../ in pathname, and expands into the
+resulting absolute pathname. All but the last component of pathname
+must exist when real-path is called.</p>
+
+<p>This tag is particularly useful when comparing if file or
+directory names are identical.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;real-path pathname=&lt;__file__/&gt; /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+/mnt/home/twim/wml-2.0.11/wml_backend/p2_mp4h/doc/mp4h.mp4h
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-file-exists">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `file-exists' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">file-exists</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>filename</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns <tt>true</tt> if file exists.</p>
+
+<p><a name="tag-get-file-properties">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `get-file-properties' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">get-file-properties</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>filename</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Returns an array of informations on this file. These
+informations are: size, type, ctime, mtime, atime, owner and
+group.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;get-file-properties &lt;__file__/&gt; /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+68685
+FILE
+1435187370
+1133459413
+1435187491
+twim
+twim
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-include">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `include' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">include</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>file=<em>filename</em> |
+command=<em>command-line</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[alt=<em>action</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[verbatim=true]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Insert the contents of a file in the file system - if the
+<tt>file</tt> attribute is given -, or the output from executing a
+system command - if the <tt>command</tt> attribute is given - into
+the input stream. For backwards compatibility, if neither the
+<tt>file</tt> nor the <tt>command</tt> attributes are given, the
+first argument is taken as a file to include.</p>
+
+<ul>
+<li><tt>file=<em>filename</em></tt><br>
+ 
+
+<p>The given file is read and inserted into the input stream. This
+attribute cannot be combined with the command attribute.</p>
+
+<p>Files are first searched in current directory, then in
+directories specified on command-line with the <tt>-I</tt> option,
+next in directories listed in the <tt>MP4HLIB</tt> environment
+variable (it used to be <tt>MP4HPATH</tt> for versions prior to
+1.3), and last under the compile-time location
+(<tt>/usr/local/lib/mp4h/1.3.0:/usr/local/share/mp4h</tt> by
+default).</p>
+</li>
+
+<li><tt>command=<em>command-line</em></tt><br>
+ 
+
+<p>The given command line is executed on the operating system, and
+the output of it is inserted in the input stream. This attribute
+cannot be combined with the file attribute.</p>
+
+<p>The given command line is executed using the popen(3) standard C
+library routine. The command is executed using the standard system
+shell, which on Posix compliant systems is sh(1).</p>
+</li>
+
+<li><tt>alt=<em>action</em></tt><br>
+ If file is not found, this alternate action is handled. If this
+atribute is not set and file is not found, then an error is raised.
+This attribute has no effect when the command attribute is
+specified.</li>
+
+<li><tt>verbatim=true</tt><br>
+ File content is included without expansion. This is similar to
+using the <b>m4</b> undivert macro with a filename as
+argument.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;include command="uname -a" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Linux localhost 3.18.9-hardened #7 SMP Sat May 9 07:50:31 2015 x86_64 Intel(R) Core(TM) i5-3210M CPU @ 2.50GHz GenuineIntel GNU/Linux
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-use">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `use' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">use</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>name=<em>package</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Load definitions from a package file.</p>
+
+<p><a name="tag-comment">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `comment' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">comment</td>
+<td></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This tag does nothing, its body is simply discarded.</p>
+
+<p><a name="tag-set-eol-comment">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `set-eol-comment' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">set-eol-comment</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[<em>string</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Change comment characters.</p>
+
+<p><a name="tag-set-quotes">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `set-quotes' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">set-quotes</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[<em>string</em> <em>string</em>]</tt></td>
+</tr>
+
+<tr>
+<td><tt>[display=visible]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>By default, all characters between <tt>&lt;@[</tt> and
+<tt>]@&gt;</tt> pairs are read without parsing. When called without
+argument, this macro inhibates this feature. When called with two
+arguments, it redefines begin and end delimiters. Begin delimiter
+must begin with a left-angle bracket, and end delimiter must end
+with a right-angle bracket.</p>
+
+<ul>
+<li><tt>display=visible</tt><br>
+ Delimiters are also written into output.</li>
+</ul>
+
+<h3>Diversion functions</h3>
+
+<p>Diversions are a way of temporarily saving output. The output of
+<b>mp4h</b> can at any time be diverted to a temporary file, and be
+reinserted into the output stream, undiverted, again at a later
+time.</p>
+
+<p>Numbered diversions are counted from 0 upwards, diversion number
+0 being the normal output stream. The number of simultaneous
+diversions is limited mainly by the memory used to describe them,
+because <b>mp4h</b> tries to keep diversions in memory. However,
+there is a limit to the overall memory usable by all diversions
+taken altogether. When this maximum is about to be exceeded, a
+temporary file is opened to receive the contents of the biggest
+diversion still in memory, freeing this memory for other
+diversions. So, it is theoretically possible that the number of
+diversions be limited by the number of available file
+descriptors.</p>
+
+<p><a name="tag-divert">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `divert' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">divert</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[ divnum=<em>diversion-number</em> ]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Output is diverted using this tag, where diversion-number is the
+diversion to be used. If the divnum attribute is left out,
+diversion-number is assumed to be zero. If output is diverted to a
+non-existent diversion, it is simply discarded. This can be used to
+suppress unwanted output. See the example below.</p>
+
+<p>When all <b>mp4h</b> input will have been processed, all
+existing diversions are automatically undiverted, in numerical
+order.</p>
+
+<p>Several calls of divert with the same argument do not overwrite
+the previous diverted text, but append to it.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;divert divnum="-1"/&gt;
+This is sent nowhere...
+&lt;divert/&gt;
+This is output.
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+This is sent nowhere...
+
+This is output.
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-undivert">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `undivert' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">undivert</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[ divnum=<em>diversion-number</em> ]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This tag explicitly undiverts diverted text saved in the
+diversion with the specified number. If the divnum attribute is not
+given, all diversions are undiverted, in numerical order.</p>
+
+<p>When diverted text is undiverted, it is not reread by
+<b>mp4h</b>, but rather copied directly to the current output. It
+is therefore not an error to undivert into a diversion.</p>
+
+<p>Unlike <b>m4</b>, the <b>mp4h</b> undivert tag does not allow a
+file name as argument. The same can be accomplished with the
+include tag with the verbatim="true" attribute.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;divert divnum="1"/&gt;
+This text is diverted.
+&lt;divert/&gt;
+This text is not diverted.
+&lt;undivert divnum="1"/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+This text is diverted.
+
+This text is not diverted.
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-divnum">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `divnum' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">divnum</td>
+<td></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This tag expands to the number of the current diversion.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+Initial &lt;divnum/&gt;
+&lt;divert divnum="1"/&gt;
+Diversion one: &lt;divnum/&gt;
+&lt;divert divnum="2"/&gt;
+Diversion two: &lt;divnum/&gt;
+&lt;divert/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Initial 0
+
+Diversion one: 1
+
+Diversion two: 2
+</pre>
+</td>
+</tr>
+</table>
+
+<h3>Debugging functions</h3>
+
+<p>When constructs become complex it could be hard to debug them.
+Functions listed below are very useful when you could not figure
+what is wrong. These functions are not perfect yet and must be
+improved in future releases.</p>
+
+<p><a name="tag-function-def">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `function-def' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">function-def</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints the replacement text of a user defined macro. For
+instance, the macro used to generate all examples of this
+documentation is</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;function-def example /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;set-var-verbatim verb-body=%ubody /&gt;
+&lt;subst-in-var verb-body "&amp;" "&amp;amp;" /&gt;
+&lt;subst-in-var verb-body "&lt;" "&amp;lt;" /&gt;
+&lt;subst-in-var verb-body "&gt;" "&amp;gt;" /&gt;
+&lt;set-var body=%body /&gt;
+&lt;subst-in-var body "&lt;(/?[a-z]*)[*]" "&lt;\\1" /&gt;
+&lt;subst-in-var body "&amp;" "&amp;amp;" /&gt;
+&lt;subst-in-var body "&lt;" "&amp;lt;" /&gt;
+&lt;subst-in-var body "&gt;" "&amp;gt;" /&gt;
+&lt;subst-in-var body "&lt;three-colon/&gt;[^;\n]*\n[ \t]*" "" /&gt;
+&lt;subst-in-var body "&lt;three-colon/&gt;$" "" reflags=m /&gt;
+&lt;subst-in-var body "^\n*(.*?)\n*$" "\\1" reflags=s /&gt;
+&lt;table border=2 cellpadding=0 cellspacing=0 width="80%" summary=""&gt;
+    &lt;tr&gt;&lt;th bgcolor="#ccccff" align=left&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;Source&lt;/th&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td bgcolor="#ccff99" width="80%"&gt;&lt;dnl/&gt;
+      &lt;pre&gt;&lt;get-var-once verb-body /&gt;&lt;/pre&gt;&lt;dnl/&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;th bgcolor="#ccccff" align=left&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;Output&lt;/th&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;td bgcolor="#ff99cc" width="80%"&gt;&lt;dnl/&gt;
+      &lt;pre&gt;&lt;get-var-once body /&gt;&lt;/pre&gt;&lt;dnl/&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-debugmode">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `debugmode' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">debugmode</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>string</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>This comand acts like the <tt>-d</tt> flag but can be ynamically
+changed.</p>
+
+<p><a name="tag-debugfile">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `debugfile' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">debugfile</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>filename</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Selects a file where debugging messages are diverted. If this
+filename is empty, debugging messages are sent back to standard
+error, and if it is set to <tt>-</tt> these messages are
+discarded.</p>
+
+<p><b>Note:</b> There is no way to print these debugging messages
+into the document being processed.</p>
+
+<p><a name="tag-debugging-on">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `debugging-on' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">debugging-on</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Declare these macros traced, i.e. informations about these
+macros will be printed if <tt>-d</tt> flag or <tt>debugmode</tt>
+macro are used.</p>
+
+<p><a name="tag-debugging-off">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `debugging-off' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">debugging-off</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em></tt></td>
+</tr>
+
+<tr>
+<td><tt>[<em>name</em>] ...</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>These macros are no more traced.</p>
+
+<h3>Miscellaneous</h3>
+
+<p><a name="tag-__file__">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `__file__' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">__file__</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[<em>name</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Without argument this macro prints current input filename. With
+an argument, this macro sets the string returned by future
+invocation of this macro.</p>
+
+<p><a name="tag-__line__">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `__line__' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">__line__</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[<em>number</em>]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Without argument this macro prints current number line in input
+file. With an argument, this macro sets the number returned by
+future invocation of this macro.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+This is &lt;__file__/&gt;, line &lt;__line__/&gt;.
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+This is ./mp4h.mp4h, line 2201.
+</pre>
+</td>
+</tr>
+</table>
+
+<p>If you closely look at source code you will see that this number
+is wrong. Indeed the number line is the end of the entire block
+containing this instruction.</p>
+
+<p><a name="tag-__version__">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `__version__' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">__version__</td>
+<td></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints the version of <b>mp4h</b>.</p>
+
+<p><a name="tag-dnl">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `dnl' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">dnl</td>
+<td></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Discard all characters until newline is reached. This macro
+ensures that following string is a comment and does not depend of
+the value of comment characters.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;dnl/&gt;This is a comment
+foo
+&lt;dnl/&gt;This is a comment
+bar
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+foo
+bar
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-date">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `date' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">date</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt>[epoch]</tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints local time according to the epoch passed on argument. If
+there is no argument, current local time is printed.</p>
+
+<ul>
+<li><tt>time</tt><br>
+ An epoch time specification.</li>
+
+<li><tt>format</tt><br>
+ A format specification as used with the strftime(3) C library
+routine.</li>
+</ul>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;date/&gt;
+&lt;set-var info=&lt;get-file-properties &lt;__file__/&gt; /&gt; /&gt;
+&lt;date &lt;get-var info[2] /&gt; /&gt;
+&lt;date time="&lt;get-var info[2] /&gt;" format="%Y-%m-%d %H:%M:%S" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Wed Jun 24 23:12:44 2015
+
+Wed Jun 24 23:09:30 2015
+2015-06-24 23:09:30
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-timer">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `timer' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">timer</td>
+<td></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Prints the time spent since last call to this macro. The printed
+value is the number of clock ticks, and so is dependant of your
+CPU.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+The number of clock ticks since the beginning of generation of
+this documentation by &amp;mp4h; is:
+&lt;timer/&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+The number of clock ticks since the beginning of generation of
+this documentation by &lt;b&gt;mp4h&lt;/b&gt; is:
+user 10
+sys 0
+</pre>
+</td>
+</tr>
+</table>
+
+<p><a name="tag-mp4h-l10n">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `mp4h-l10n' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">mp4h-l10n</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>name</em>=<em>value</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Set locale-specific variables. By default, the portable "C"
+locale is selected. As locales have different names on different
+platforms, you must refer to your system documentation to find
+which values are adapted to your system.</p>
+
+<p><a name="tag-mp4h-output-radix">&nbsp;</a></p>
+
+<table cellspacing="0" cellpadding="3" bgcolor="#ff0000" border="0"
+summary="Syntax of the `mp4h-output-radix' tag">
+<tr>
+<td>
+<table bgcolor="#ffffff" cellspacing="0" cellpadding="4" border="0"
+summary="">
+<tr>
+<td>
+<table border="0" summary="">
+<tr valign="top">
+<td align="center"><a href="#noteattr"><tt>S</tt></a></td>
+<td align="center">&nbsp;</td>
+<td align="center">mp4h-output-radix</td>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" summary="">
+<tr>
+<td><tt><em>number</em></tt></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p>Change the output format of floats by setting the number of
+digits after the decimal point. Default is to print numbers in the
+"%6.f" format.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;add 1.2 3.4 /&gt;
+&lt;mp4h-output-radix 2 /&gt;
+&lt;add 1.2 3.4 /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+4.600000
+
+4.60
+</pre>
+</td>
+</tr>
+</table>
+
+<h2>External packages</h2>
+
+<p>It is possible to include external files with the
+<tt>include</tt> command. Files are first searched in current
+directory, then in directories specified on command-line with the
+<tt>-I</tt> option, next in directories listed in the
+<tt>MP4HLIB</tt> environment variable (it used to be
+<tt>MP4HPATH</tt> for versions prior to 1.3), and last under the
+compile-time location
+(<tt>/usr/local/lib/mp4h/1.3.0:/usr/local/share/mp4h</tt> by
+default).</p>
+
+<p>Another way to include packages is with the <tt>use</tt>
+command. There are two differences between <tt>use</tt> and
+<tt>include</tt>: first, package name has no suffix; and more
+important, a package cannot be loaded more than once.</p>
+
+<h2>Macro expansion</h2>
+
+<p>This part describes internal mechanism of macro expansion. It
+must be as precise and exhaustive as possible so <a href=
+"mailto:barbier@imacs.polytechnique.fr"><tt>contact me</tt></a> if
+you have any suggestion.</p>
+
+<h3>Basics</h3>
+
+<p>Let us begin with some examples:</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag foo&gt;
+This is a simple tag
+&lt;/define-tag&gt;
+&lt;define-tag bar endtag=required&gt;
+This is a complex tag
+&lt;/define-tag&gt;
+&lt;foo/&gt;
+&lt;bar&gt;Body function&lt;/bar&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+This is a simple tag
+
+
+This is a complex tag
+</pre>
+</td>
+</tr>
+</table>
+
+<p>User defined macros may have attributes like HTML tags. To
+handle these attributes in replacement text, following conventions
+have been adopted (mostly derived from <b>Meta-HTML</b>):</p>
+
+<ul>
+<li>Sequence <tt>%name</tt> is replaced by the command name.</li>
+
+<li>Attributes are numbered from 0. In replacement text,
+<tt>%0</tt> is replaced by first argument, <tt>%1</tt> by the 2nd,
+etc. As there is no limitation on the number of arguments,
+<tt>%20</tt> is the 21st argument and not the third followed by the
+0 letter. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag href&gt;
+&lt;a href="%0"&gt;%1&lt;/a&gt;
+&lt;/define-tag&gt;
+&lt;href http://www.gimp.org "The Gimp" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;a href="http://www.gimp.org"&gt;The Gimp&lt;/a&gt;
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li>Sequence <tt>%#</tt> prints number of attributes.</li>
+
+<li>Sequence <tt>%%</tt> is replaced by <tt>%</tt>, which is useful
+in nested definitions. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag outer&gt;;;;
+outer, # attributes: %#
+&lt;define-tag inner1&gt;;;;
+inner1, # attributes: %#;;;
+&lt;/define-tag&gt;;;;
+&lt;define-tag inner2&gt;;;;
+inner2, # attributes: %%#;;;
+&lt;/define-tag&gt;;;;
+&lt;inner1 %attributes and some others /&gt;
+&lt;inner2 %attributes and some others /&gt;
+&lt;/define-tag&gt;
+&lt;outer list attributes /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+outer, # attributes: 2
+inner1, # attributes: 2
+inner2, # attributes: 5
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li>Sequence <tt>%attributes</tt> is replaced by the space
+separated list of attributes. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag mail1&gt;
+&lt;set-var %attributes /&gt;
+&lt;get-var name /&gt;
+&lt;get-var mail /&gt;
+&lt;/define-tag&gt;
+&lt;set-var name="" mail="" /&gt;
+&lt;mail1 name="Dr. Foo" mail="hello@foo.com" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Dr. Foo
+hello@foo.com
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li>Sequence <tt>%body</tt> is replaced by the body of a complex
+macro. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag mail2 endtag=required whitespace=delete&gt;
+&lt;set-var %attributes /&gt;
+&lt;a href="mailto:&lt;get-var mail /&gt;"&gt;%body&lt;/a&gt;
+&lt;/define-tag&gt;
+&lt;mail2 mail="hello@foo.com"&gt;
+&lt;img src="photo.png" alt="Dr. Foo" border=0    /&gt;
+&lt;/mail2&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;a href="mailto:hello@foo.com"&gt;
+&lt;img src="photo.png" alt="Dr. Foo" border=0      /&gt;
+&lt;/a&gt;
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li>The two forms above accept modifiers. When
+<tt>%Aattributes</tt> or <tt>%Abody</tt> is used, a newline
+separated list of attributes is printed. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag show-attributes whitespace=delete&gt;
+&lt;set-var list="%Aattributes" i=0 /&gt;
+&lt;foreach attr list&gt;
+&lt;group "%&lt;get-var i /&gt;: &lt;get-var attr /&gt;" /&gt;
+&lt;increment i /&gt;
+&lt;/foreach&gt;
+&lt;/define-tag&gt;
+&lt;show-attributes name="Dr. Foo" mail="hello@foo.com" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+%0: name=Dr. Foo%1: mail=hello@foo.com
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li>Another alternate form is obtained by replacing <tt>A</tt> by
+<tt>U</tt>, in which case text is replaced but will not be
+expanded. This does make sense only when macro has been defined
+with <tt>attributes=verbatim</tt>, otherwise attributes are
+expanded before replacement. 
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag show1&gt;
+Before expansion: %Uattributes
+After expansion: %attributes
+&lt;/define-tag&gt;
+&lt;define-tag show2 attributes=verbatim&gt;
+Before expansion: %Uattributes
+After expansion: %attributes
+&lt;/define-tag&gt;
+&lt;define-tag bar&gt;and here %attributes&lt;/define-tag&gt;
+&lt;show1 &lt;bar we go /&gt; /&gt;
+&lt;show2 &lt;bar we go /&gt; /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+Before expansion: and here we go
+After expansion: and here we go
+
+
+Before expansion: &lt;bar we go /&gt;
+After expansion: and here we go
+</pre>
+</td>
+</tr>
+</table>
+</li>
+
+<li>Modifiers <tt>A</tt> and <tt>U</tt> can be combined.</li>
+</ul>
+
+<p><b>Note:</b> Input expansion is completely different in
+<b>Meta-HTML</b> and in <b>mp4h</b>. With <b>Meta-HTML</b> it is
+sometimes necessary to use other constructs like <tt>%xbody</tt>
+and <tt>%qbody</tt>. In order to improve compatibity with
+<b>Meta-HTML</b>, these constructs are recognized and are
+interpreted like <tt>%body</tt>. Another feature provided for
+compatibility reason is the fact that for simple tags
+<tt>%body</tt> and <tt>%attributes</tt> are equivalent. These
+features are in the current <b>mp4h</b> version but may disappear
+in future releases.</p>
+
+<h3>Attributes</h3>
+
+<p>Attributes are separated by spaces, tabulations or newlines, and
+each attribute must be a valid <b>mp4h</b> entity. For instance
+with the definitions above, <tt>&lt;bar&gt;</tt> can not be an
+attribute since it must be finished by <tt>&lt;/bar&gt;</tt>. But
+this is valid:</p>
+
+<pre>
+&lt;foo &lt;foo/&gt; /&gt;
+</pre>
+
+or even 
+
+<pre>
+&lt;foo &lt;foo name=src url=ici /&gt; /&gt;
+</pre>
+
+<p>In these examples, the <tt>foo</tt> tag has only one
+argument.</p>
+
+<p>Under certain circumstances it is necessary to group multiple
+statements into a single one. This can be done with double quotes
+or with the <tt>group</tt> primitive, e.g.</p>
+
+<pre>
+&lt;foo "This is the 1st attribute"
+           &lt;group and the second /&gt; /&gt;
+</pre>
+
+<p><b>Note:</b> Unlike HTML single quotes can not replace doube
+quotes for this purpose.</p>
+
+<p>If double quotes appear in an argument, they must be escaped by
+a backslash <tt>\</tt>.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+  &lt;set-var text="Text with double quotes \" inside" /&gt;
+  &lt;get-var text /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+  
+  Text with double quotes " inside
+</pre>
+</td>
+</tr>
+</table>
+
+<h3>Macro evaluation</h3>
+
+<p>Macros are characterized by</p>
+
+<ul>
+<li>name</li>
+
+<li>container status (simple or complex)</li>
+
+<li>if attributes are expanded or not</li>
+
+<li>function type (primitive or user defined macro)</li>
+
+<li>for primitives, adress of corresponding code in memory and for
+user defined macros the replacement text</li>
+</ul>
+
+<p>Characters are read on input until a left angle bracket is
+found. Then macro name is read. After that attributes are read,
+verbatim or not depending on how this macro as been defined. And if
+this macro is complex, its body is read verbatim. When this is
+finished, some special sequences in replacement text are replaced
+(like <tt>%body</tt>, <tt>%attributes</tt>, <tt>%0</tt>,
+<tt>%1</tt>, etc.) and resulting text is put on input stack in
+order to be rescanned.</p>
+
+<p><b>Note:</b> By default attributes are evaluated before any
+replacement.</p>
+
+<p>Consider the following example, to change text in typewriter
+font:</p>
+
+<pre>
+&lt;define-tag text-tt endtag=required whitespace=delete&gt;
+&lt;tt&gt;%body&lt;/tt&gt;
+&lt;/define-tag&gt;
+</pre>
+
+<p>This definition has a major drawback:</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;text-tt&gt;This is an &lt;text-tt&gt;example&lt;/text-tt&gt;&lt;/text-tt&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;tt&gt;This is an &lt;tt&gt;example&lt;/tt&gt;&lt;/tt&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+We would like the inner tags be removed. 
+
+<p>First idea is to use an auxiliary variable to know whether we
+still are inside such an environment:</p>
+
+<pre>
+&lt;set-var _text:tt=0 /&gt;
+&lt;define-tag text-tt endtag=required whitespace=delete&gt;
+&lt;increment _text:tt /&gt;
+&lt;ifeq &lt;get-var _text:tt /&gt; 1 "&lt;tt*&gt;" /&gt;
+%body
+&lt;ifeq &lt;get-var _text:tt /&gt; 1 "&lt;/tt*&gt;" /&gt;
+&lt;decrement _text:tt /&gt;
+&lt;/define-tag&gt;
+</pre>
+
+<p>(the presence of asterisks in HTML tags is explained in next
+section).</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;text-tt&gt;This is an &lt;text-tt&gt;example&lt;/text-tt&gt;&lt;/text-tt&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;tt&gt;This is an example&lt;/tt&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p>But if we use simple tags, as in the example below, our
+definition does not seem to work. It is because attributes are
+expanded before they are put into replacement text.</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag opt&gt;&lt;text-tt&gt;%attributes&lt;/text-tt&gt;&lt;/define-tag&gt;
+&lt;opt "This is an &lt;opt example /&gt;" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;tt&gt;This is an &lt;tt&gt;example&lt;/tt&gt;&lt;/tt&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<p>If we want to prevent this problem we have to forbid attributes
+expansion with</p>
+
+<table border="2" cellpadding="0" cellspacing="0" width="80%"
+summary="">
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Source</th>
+</tr>
+
+<tr>
+<td bgcolor="#ccff99" width="80%">
+<pre>
+&lt;define-tag opt attributes=verbatim&gt;;;;
+&lt;text-tt&gt;%attributes&lt;/text-tt&gt;;;;
+&lt;/define-tag&gt;
+&lt;opt "This is an &lt;opt example /&gt;" /&gt;
+</pre>
+</td>
+</tr>
+
+<tr>
+<th bgcolor="#ccccff" align="left">&nbsp;&nbsp;&nbsp;Output</th>
+</tr>
+
+<tr>
+<td bgcolor="#ff99cc" width="80%">
+<pre>
+&lt;tt&gt;This is an example&lt;/tt&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<h3>Expansion flags</h3>
+
+<p>When you want to embed some server-side scripting language in
+your pages, you face up some weird problems, like in</p>
+
+<pre>
+&lt;a href=&lt;%= $url %&gt;&gt;Hello&lt;/a&gt;
+</pre>
+
+<p>The question is how do <b>mp4h</b> know that this input has some
+extra delimiters? The answer is that <b>mp4h</b> should not try to
+handle some special delimiters, because it cannot handle all of
+them (there are ASP, ePerl, PHP,... and some of them are
+customizable). Now, remember that <b>mp4h</b> is a macro-processor,
+not an XML parser. So we must focus on macros,and format our input
+file so that it can be parsed without any problem. Previous example
+may be written</p>
+
+<pre>
+&lt;a href="&lt;%= $url %&gt;"&gt;Hello&lt;/a&gt;
+</pre>
+
+<p>because quotes prevent inner right-angle bracket from closing
+the <tt>a</tt> tag.</p>
+
+<p>Another common problem is when we need to print only a begin or
+an end tag alone. For instance it is very desirable to define its
+own headers and footers with</p>
+
+<pre>
+&lt;define-tag header&gt;
+&lt;html*&gt;
+&lt;head&gt;
+... put here some informations ....
+&lt;/head&gt;
+&lt;body* bgcolor="#ffffff" text="#000000"&gt;
+&lt;/define-tag&gt;
+&lt;define-tag footer&gt;
+&lt;/body*&gt;
+&lt;/html*&gt;
+&lt;/define-tag&gt;
+</pre>
+
+<p>Asterisks mark these tags as pseudo-simple tags, which means
+that they are complex HTML tags, but used as simple tags within
+<b>mp4h</b> because tags would not be well nested otherwise.</p>
+
+<p>This asterisk is called ``trailing star'', it appears at the end
+of the tag name.</p>
+
+<p>Sometimes HTML tags are not parsable, as in this javascript
+code:</p>
+
+<pre>
+  ...
+    document.write('&lt;*img src="foo.gif"');
+    if (text) document.write(' alt="'+text+'"');
+    document.write('&gt;');
+  ...
+</pre>
+
+<p>The ``leading star'' is an asterisk between left-angle bracket
+and tag name, which prevents this tag from being parsed.</p>
+
+<p>That said we can now understand what the <tt>--expansion</tt>
+flag is for. It controls how expansion is performed by mp4h. It is
+followed by an integer, which is a bit sum of the following
+values</p>
+
+<table cellspacing="2" border="0" summary="">
+<tr valign="top">
+<td>1</td>
+<td>do not parse unknown tags.<br>
+ When set, HTML tags are not parsed. When unset, HTML tags are
+parsed, i.e. that attributes and/or body is collected.</td>
+</tr>
+
+<tr valign="top">
+<td>2</td>
+<td>unknown tags are assumed being simple.<br>
+ When set, HTML tags are simple by default. When unset, HTML tags
+are complex by default, unless their attribute contain a trailing
+slash or a trailing star appear just after tag name (see
+below).</td>
+</tr>
+
+<tr valign="top">
+<td>4</td>
+<td>trailing star in tag name do not make this tag simple.<br>
+ When set, trailing star in tag name has no special effect. When
+unset, it causes an HTML tag to be simple.</td>
+</tr>
+
+<tr valign="top">
+<td>8</td>
+<td>an unmatched end tag closes all previous unmatched begin
+tags.<br>
+ When set, all missing end closing tags are automatically inserted.
+When unset, an unmatched end tag is discarded and interpreted as
+normal text, so processing goes on until matching and tag is
+found.</td>
+</tr>
+
+<tr valign="top">
+<td>16</td>
+<td>interpret backslashes as printf.<br>
+ When set, backslashes before non special characters are removed.
+When unset, they are preserved.</td>
+</tr>
+
+<tr valign="top">
+<td>32</td>
+<td>remove trailing slash in tag attributes.<br>
+ When set, remove trailing slash in tag attributes on output. When
+unset, they are preserved.</td>
+</tr>
+
+<tr valign="top">
+<td>64</td>
+<td>do not remove trailing star in tag name.<br>
+ When set, trailing star after tag name are preserved on output.
+When unset, they are removed.</td>
+</tr>
+
+<tr valign="top">
+<td>128</td>
+<td>do not remove leading star in tag name.<br>
+ When set, leading star before tag name are preserved on output.
+When unset, they are removed.</td>
+</tr>
+
+<tr valign="top">
+<td>256</td>
+<td>do not add a space before trailing slash in tag attributes<br>
+ By default, a space is inserted before trailing slash in tag
+attributes. When set, this space is not prepended.</td>
+</tr>
+
+<tr valign="top">
+<td>1024</td>
+<td>suppress warnings about bad nested tags.<br>
+ When set, warnings about bad nested tags are not displayed. When
+unset, they are printed on standard error.</td>
+</tr>
+
+<tr valign="top">
+<td>2048</td>
+<td>suppress warnings about missing trailing slash.<br>
+ When set, warnings about missing trailing slash are not displayed.
+When unset, they are printed on standard error.</td>
+</tr>
+</table>
+
+<p>Run</p>
+
+<pre>
+  mp4h -h
+</pre>
+
+to find default value. Current value matches HTML syntax, and it
+will tend to zero when XHTML syntax becomes more familiar. 
+
+<h2>Author</h2>
+
+<p><a href="mailto:barbier@imacs.polytechnique.fr"><tt>Denis
+Barbier</tt></a></p>
+
+<p>Mp4h has its own <a href=
+"http://www.engelschall.com/sw/mp4h/"><tt>homepage</tt></a>.</p>
+
+<h2>Thanks</h2>
+
+<p>Sincere thanks to Brian J. Fox for writing <b>Meta-HTML</b> and
+Rene Seindal for maintaining this wonderful macro parser called GNU
+<b>m4</b>.</p>
+</body>
+</html>
+

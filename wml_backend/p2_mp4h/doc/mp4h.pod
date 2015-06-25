@@ -1,0 +1,6111 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+
+  
+
+
+  
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+=pod
+
+=head1 NAME
+
+mp4h - Macro Processor for HTML Documents
+
+=head1 VERSION
+
+This documentation describes mp4h version 1.3.0.
+
+
+=head1 INTRODUCTION
+
+
+
+
+The B<mp4h> software is a macro-processor specifically designed to deal
+with HTML documents.  It allows powerful programming constructs, with a
+syntax familiar to HTML authors.
+
+
+
+
+
+
+
+This software is based on
+B<Meta-HTML> C<E<lt>URL:http://www.metahtml.org/E<gt>>,
+written by Brian J. Fox,  Even if both syntaxes look similar, source
+code is completely different.  Indeed, a subset of B<Meta-HTML> was used
+as a part of a more complex program, B<WML>
+(Website Meta Language C<E<lt>URL:http://www.engelschall.com/sw/wml/E<gt>>)
+written by Ralf S. Engelschall and which i maintain since January 1999.
+For licensing reasons, it was hard to hack B<Meta-HTML> and so i decided
+to write my own macro-processor.
+
+
+
+
+
+
+
+Instead of rewriting it from scratch, I preferred using another
+macro-processor engine. I chose
+GNU B<m4> C<E<lt>URL:http://www.gnu.org/software/m4/E<gt>>,
+written by Rene Seindal, because of its numerous advantages :
+this software is stable, robust and very well documented.
+This version of B<mp4h> is derived from GNU B<m4> version 1.4n, which is a
+development version.
+
+
+
+
+
+
+
+The B<mp4h> software is not an HTML editor; its unique goal is to
+provide an easy way to define its own macros inside HTML documents.
+There is no plan to add functionalities to automagically produce valid
+HTML documents, if you want to clean up your code or validate it,
+simply use a post-processor like
+tidy C<E<lt>URL:http://www.w3.org/People/Raggett/tidy/E<gt>>.
+
+
+
+
+=head1 COMMAND LINE OPTIONS
+
+
+
+
+Optional arguments are enclosed within square brackets.
+All option synonyms have a similar syntax, so when a long option accepts
+an argument, short option do too.
+
+
+
+
+
+
+
+Syntax call is
+
+
+
+
+
+   mp4h [options] [filename [filename] ...]
+
+
+
+
+Options are described below.  If no filename is specified, or if its
+name is C<->, then characters are read on standard input.
+
+
+
+
+=head2 Operation modes
+
+
+
+=over 2
+
+
+
+
+=item B<--help> display an help message and exit
+
+
+
+
+=item B<--version> output B<mp4h> version information and exit
+
+
+
+
+=item B<-E --fatal-warnings> stop execution after first warning
+
+
+
+
+=item B<-Q --quiet --silent> suppress some warnings for builtins
+
+
+
+
+=item B<-S --safety-level=C<NUMBER>> disable risky functions;
+0 means no filtering, 1 disable C<execute> and 2 disable this
+one too plus all filesystem related functions:
+C<file-exists>,
+C<real-path>,
+C<get-file-properties>,
+C<directory-contents> and
+C<include>.
+
+
+
+
+
+=back
+
+
+
+=head2 Preprocessor features
+
+
+
+=over 2
+
+
+
+
+=item B<-I --include=C<DIRECTORY>> search this directory for includes and packages
+
+
+
+
+=item B<-D --define=C<NAMEC<[=VALUE]>>> set variable NAME to VALUE, or empty
+
+
+
+
+=item B<-U --undefine=C<COMMAND>> delete builtin COMMAND
+
+
+
+
+=item B<-s --synclines> generate `#line NO "FILE"' lines
+
+
+
+
+=back
+
+
+
+=head2 Parser features
+
+
+
+=over 2
+
+
+
+
+=item B<-c --caseless=C<NUMBER>> set case sensitiveness according to the bits of C<NUMBER>.
+A null bit means symbol is case sensitive, and bits are defined as
+followed: 0 for tags, 1 for variables and 2 for entities.
+Default value is 3, i.e. only entities are case sensitive.
+
+
+
+
+=item B<-e --encoding=C<NAME>> specify document encoding.  Valid options are `8bit' (default) or `utf8'.
+
+
+
+
+=item B<-X --expansion=C<NUMBER>> set parser behaviour according to the bits of C<NUMBER>
+
+
+
+
+=back
+
+
+
+
+
+
+NUMBER is a combination of
+
+
+
+
+
+
+=over 2
+
+
+
+
+=item B<1> do not parse unknown tags
+
+
+
+
+=item B<2> unknown tags are assumed being simple
+
+
+
+
+=item B<4> trailing star in tag name do not make this tag simple
+
+
+
+
+=item B<8> an unmatched end tag closes all previous unmatched begin tags
+
+
+
+
+=item B<16> interpret backslashes as printf
+
+
+
+
+=item B<32> remove trailing slash in tag attributes
+
+
+
+
+=item B<64> do not remove trailing star in tag name
+
+
+
+
+=item B<128> do not remove leading star in tag name
+
+
+
+
+=item B<256> do not add a space before trailing slash in tag attributes
+
+
+
+
+=item B<1024> suppress warnings about bad nested tags
+
+
+
+
+=item B<2048> suppress warnings about missing trailing slash
+
+
+
+
+=back
+
+
+
+
+
+
+In version 1.3.0, default value is 3114=2+8+32+1024+2048.
+
+
+
+
+=head2 Limits control
+
+
+
+=over 2
+
+
+
+
+=item B<-H --hashsize=C<PRIME>> set symbol lookup hash table size (default 509)
+
+
+
+
+=item B<-L -nesting-limit=C<NUMBER>> change artificial nesting limit (default 250)
+
+
+
+
+=back
+
+
+
+=head2 Debugging
+
+
+
+=over 2
+
+
+
+
+=item B<-d --debug=C<FLAGS>> set debug level (no FLAGS implies `aeq')
+
+
+
+
+=item B<-t --trace=C<NAME>> trace NAME when it will be defined
+
+
+
+
+=item B<-l --arglength=C<NUMBER>> restrict macro tracing size
+
+
+
+
+=item B<-o --error-output=C<FILE>> redirect debug and trace output
+
+
+
+
+=back
+
+
+
+
+
+
+Flags are any of:
+
+
+
+
+
+
+=over 2
+
+
+
+
+=item B<t> trace for all macro calls, not only debugging-on'ed
+
+
+
+
+=item B<a> show actual arguments
+
+
+
+
+=item B<e> show expansion
+
+
+
+
+=item B<c> show before collect, after collect and after call
+
+
+
+
+=item B<x> add a unique macro call id, useful with c flag
+
+
+
+
+=item B<f> say current input file name
+
+
+
+
+=item B<l> say current input line number
+
+
+
+
+=item B<p> show results of path searches
+
+
+
+
+=item B<m> show results of module operations
+
+
+
+
+=item B<i> show changes in input files
+
+
+
+
+=item B<V> shorthand for all of the above flags
+
+
+
+
+=back
+
+
+
+=head1 DESCRIPTION
+
+
+
+
+The B<mp4h> software is a macro-processor, which means that keywords are
+replaced by other text.  This chapter describes all primitives.
+As B<mp4h> has been specially designed for HTML documents, its syntax is
+very similar to HTML, with tags and attributes.  One important feature
+has no equivalent in HTML: comments until end of line.  All text
+following three colons is discarded until end of line, like
+
+
+
+
+
+   ;;;  This is a comment
+
+
+
+=head2 Function Macros
+
+
+
+B<Note:> 
+All examples in this documentation are processed through B<mp4h> with
+expansion flags set to zero (see a description of possible expansion
+flags at the end of document), it is why simple tags contain a trailing
+slash. But B<mp4h> can output plain HTML files with other expansion
+flags.
+
+
+
+
+
+
+
+The definition of new tags is the most common task provided by B<mp4h>.
+As with HTML, macro names are case insensitive, unless C<-c>
+option is used to change this default behaviour.  In this documentation,
+only lowercase letters are used.
+There are two kinds of tags: simple and complex. A simple tag has the
+following form:
+
+
+
+
+
+   <name [attributes] />
+
+whereas a complex tag looks like:
+
+
+   <name [attributes]>
+   body
+   </name>
+
+
+
+
+Since version 0.9.1, B<mp4h> knows XHTML syntax too, so your input file
+may conform to HTML or XHTML syntax.  In this manual, we adopt the
+latter, which is why simple tags have a trailing slash in attributes.
+If you want to produce HTML files with this input file, you may either
+choose an adequate C<--expansion> flag or use a post-processor like
+tidy C<E<lt>URL:http://www.w3.org/People/Raggett/tidy/E<gt>>.
+
+
+
+
+
+
+
+When a simple tag is defined by B<mp4h>, it can be parsed even if the
+trailing slash is omitted, because B<mp4h> knows that this tag is
+simple.  But it is a good practice to always append a trailing slash to
+simple tags.
+
+
+
+
+
+
+
+
+In macro descriptions below, a slash indicates a simple tag, and a V
+letter that attributes are read verbatim (without expansion) (see the
+chapter on macro expansion for further details).
+
+
+
+
+
+
+
+=over 2
+
+=item * define-tag 
+
+C<I<name>> C<[attributes=verbatim]> C<[endtag=required]> C<[whitespace=delete]> 
+
+=back
+
+
+
+
+
+
+This function lets you define your own tags.  First argument is the
+command name. Replacement text is the function body.
+
+
+
+
+
+Source:
+
+   <define-tag foo>bar</define-tag>
+   <foo/>
+   
+
+Output:
+
+   bar
+   
+
+
+
+
+
+
+Even if spaces have usually few incidence on HTML syntax, it is
+important to note that
+
+
+
+
+
+   <define-tag foo>bar</define-tag>
+
+and
+
+
+   <define-tag foo>
+   bar
+   </define-tag>
+
+are not equivalent, the latter form contains two newlines that were not
+present in the former.
+
+
+
+
+=over 4
+
+
+
+=item C<whitespace=delete>
+
+
+Some spaces are suppressed in replacement text, in particular any
+leading or trailing spaces, and newlines not enclosed within angle
+brackets.
+
+
+
+
+
+=item C<endtag=required>
+
+
+Define a complex tag
+
+
+
+Source:
+
+   <define-tag foo>bar</define-tag>
+   <foo/>
+   
+
+Output:
+
+   bar
+   
+
+
+
+
+
+Source:
+
+   <define-tag bar endtag=required>;;;
+   body is: %body</define-tag>
+   <bar>Here it is</bar>
+   
+
+Output:
+
+   body is: Here it is
+   
+
+
+
+
+
+
+
+=item C<attributes=verbatim>
+
+
+By default attributes are expanded before text is replaced. If this
+attribute is used, attributes are inserted into replacement text without
+expansion.
+
+
+
+Source:
+
+   <define-tag foo>quux</define-tag>
+   <define-tag bar attributes=verbatim endtag=required>
+   Body: %Ubody
+   Attributes: %Uattributes
+   </define-tag>
+   <bar txt="<foo/>">Here we go</bar>
+   
+
+Output:
+
+   Body: Here we go
+   Attributes: txt=<foo/>
+   
+
+
+
+
+
+
+
+
+=back
+
+
+
+
+
+=over 2
+
+=item * provide-tag 
+
+C<I<name>> C<[attributes=verbatim]> C<[endtag=required]> C<[whitespace=delete]> 
+
+=back
+
+
+
+
+
+
+This command is similar to the previous one, except that no operation is
+performed if this command was already defined.
+
+
+
+
+
+
+=over 2
+
+=item * let C<S>
+
+C<I<new>=I<old>> 
+
+=back
+
+
+
+
+
+
+Copy a function. This command is useful to save a macro definition
+before redefining it.
+
+
+
+
+
+
+Source:
+
+   <define-tag foo>one</define-tag>
+   <let bar=foo />
+   <define-tag foo>two</define-tag>
+   <foo/><bar/>
+   
+
+Output:
+
+   twoone
+   
+
+
+
+
+
+=over 2
+
+=item * undef C<S>
+
+C<I<name>> 
+
+=back
+
+
+
+
+
+
+Delete a command definition.
+
+
+
+
+
+
+Source:
+
+   <define-tag foo>one</define-tag>
+   <undef foo />
+   <foo/>
+   
+
+Output:
+
+   <foo />
+   
+
+
+
+
+
+=over 2
+
+=item * set-hook 
+
+C<I<name>> C<[position=before|after]> C<[action=insert|append|replace]> 
+
+=back
+
+
+
+
+
+
+Add text to a predefined macro. This mechanism allows modifications
+of existing macros without having to worry about its type, whether it is
+complex or not.
+
+
+
+
+
+
+Source:
+
+   <let foo=add />
+   <set-hook foo position=before>
+   Before</set-hook>
+   <set-hook foo position=after>
+   After</set-hook>
+   <foo 1 2 3 4 />
+   
+
+Output:
+
+   Before10
+   After
+   
+
+
+
+
+
+=over 2
+
+=item * get-hook C<S>
+
+C<I<name>> C<[position=before|after]> 
+
+=back
+
+
+
+
+
+
+Print current hooks of a macro.
+
+
+
+
+
+Source:
+
+   Text inserted with position=before:<get-hook foo position=before />!
+   Text inserted with position=after:<get-hook foo position=after />!
+   
+
+Output:
+
+   Text inserted with position=before:
+   Before!
+   Text inserted with position=after:
+   After!
+   
+
+
+
+
+
+=over 2
+
+=item * attributes-quote C<S>
+
+C<C<%attributes>> 
+
+=back
+
+
+
+
+
+
+Like C<%attributes>, except that C<attr=value> pairs are
+printed with double quotes surrounding attribute values, and a leading
+space is added if some text is printed.
+
+
+
+
+
+
+Source:
+
+   <define-tag foo>;;;
+   %attributes
+   <img<attributes-quote %attributes />/>
+   </define-tag>
+   <foo id="logo" src="logo.gif" name="Logo" alt="Our logo" />
+   <foo/>
+   
+
+Output:
+
+   id=logo src=logo.gif name=Logo alt=Our logo
+   <img id="logo" src="logo.gif" name="Logo" alt="Our logo"/>
+   
+
+   <img/>
+   
+
+
+
+
+
+
+=over 2
+
+=item * attributes-extract C<S>
+
+C<I<name1>> C<[,I<name2>[,I<name3>...]]> C<C<%attributes>> 
+
+=back
+
+
+
+
+
+
+Extract from C<%attributes> the C<attr=value> pairs for
+names matching any of I<name1>, I<name2>....
+
+
+
+
+
+Source:
+
+   <define-tag img whitespace=delete>
+   <img* <attributes-extract name,src,alt %attributes />  />
+   </define-tag>
+   <img id="logo" src="logo.gif" name="Logo" alt="Our logo"  />
+   
+
+Output:
+
+   <img src=logo.gif name=Logo alt=Our logo    />
+   
+
+
+
+
+
+
+=over 2
+
+=item * attributes-remove C<S>
+
+C<I<name1>> C<[,I<name2>[,I<name3>...]]> C<C<%attributes>> 
+
+=back
+
+
+
+
+
+
+Remove from C<%attributes> the C<attr=value> pairs for
+names matching any of I<name1>, I<name2>....
+
+
+
+
+
+Source:
+
+   <define-tag img whitespace=delete>
+   <img* <attributes-quote <attributes-remove name,src,alt %attributes />/> />
+   </define-tag>
+   <img id="logo" src="logo.gif" name="Logo" alt="Our logo"  />
+   
+
+Output:
+
+   <img  id="logo"   />
+   
+
+
+
+
+
+
+B<Note:> 
+The two previous functions are special, because unlike all other macros,
+their expansion do not form a group.  This is necessary to parse the
+resulting list of attributes.
+
+
+
+
+
+
+
+In those two functions, names of attributes may be regular expressions.
+Main goal of these primitives is to help writing macros accepting any
+kind of attributes without having to declare them. A canonical example
+is
+
+
+
+
+Source:
+
+   <define-tag href whitespace=delete>
+   <preserve url name />
+   <set-var <attributes-extract url,name %attributes />/>
+   <a <attributes-quote <attributes-remove url,name %attributes />/>
+      href="<get-var url />"><get-var name /></a>
+   <restore  url name />
+   </define-tag>
+   <href class=web url="http://www.foo.com" name="Welcome"  />
+   
+
+Output:
+
+   <a  class="web"
+      href="http://www.foo.com">Welcome</a>
+   
+
+
+
+
+
+
+But we want now to add an image attribute.  So we may write
+
+
+
+
+Source:
+
+   <define-tag href whitespace=delete>
+   <preserve url name image />
+   <set-var <attributes-extract url,name,image %attributes />/>
+   <a <attributes-quote <attributes-remove url,name,image %attributes />/>
+      href="<get-var url />">
+   <if <get-var image />
+      <img <attributes-quote <attributes-remove url,name,image %attributes />/>
+         src="<get-var image />" alt="<get-var name />" border=0  />
+     <get-var name />
+   />
+   </a>
+   <restore  url name image />
+   </define-tag>
+   <href class=web url="http://www.foo.com" name="Welcome" image="foo.png"/>
+   
+
+Output:
+
+   <a  class="web"
+      href="http://www.foo.com"><img  class="web"
+         src="foo.png" alt="Welcome" border=0      /></a>
+   
+
+
+
+
+
+
+We need a mechanism to tell B<mp4h> that some attributes refer to
+specific HTML tags.  A solution is to prepend attribute with tag name,
+e.g.
+
+
+
+
+Source:
+
+   <define-tag href whitespace=delete>
+   <preserve url name image />
+   <set-var <attributes-extract url,name,image %attributes />/>
+   <a <attributes-quote <attributes-extract a:.* %attributes />/>
+      href="<get-var url />">
+   <if <get-var image />
+      <img <attributes-quote <attributes-extract img:.* %attributes />/>
+         src="<get-var image />" alt="<get-var name />"  />
+     <get-var name />
+   />
+   </a>
+   <restore  url name image />
+   </define-tag>
+   <href a:class=web img:id=logo img:border=1
+         url="http://www.foo.com" name="Welcome" image="foo.png" />
+   
+
+Output:
+
+   <a  a:class="web"
+      href="http://www.foo.com"><img  img:id="logo" img:border="1"
+         src="foo.png" alt="Welcome"      /></a>
+   
+
+
+
+
+
+
+This example shows that regular expressions may be used within
+attributes names, but it is still incomplete, because we want to remove
+prefix from attributes.  One solution is with C<subst-in-string>,
+but there is a more elegant one:
+
+
+
+
+
+Source:
+
+   <define-tag href whitespace=delete>
+   <preserve url name image />
+   <set-var <attributes-extract url,name,image %attributes />/>
+   <a <attributes-quote <attributes-extract :a:(.*) %attributes />/>
+      href="<get-var url />">
+   <if <get-var image />
+      <img <attributes-quote <attributes-extract :img:(.*) %attributes />/>
+         src="<get-var image />" alt="<get-var name />"  />
+     <get-var name />
+   />
+   </a>
+   <restore  url name image />
+   </define-tag>
+   <href :a:class=web :img:id=logo :img:border=1
+         url="http://www.foo.com" name="Welcome" image="foo.png" />
+   
+
+Output:
+
+   <a  class="web"
+      href="http://www.foo.com"><img  id="logo" border="1"
+         src="foo.png" alt="Welcome"      /></a>
+   
+
+
+
+
+
+
+When there are subexpressions within regular expressions, they are
+printed instead of the whole expression.  Note also that i put a colon
+before the prefix in order not to mix them with XML namespaces.
+
+
+
+
+
+=head2 Entities
+
+
+
+
+Entities are macros in the same way as tags, but they do not take
+any arguments. Whereas tags are normally used to mark up text,
+entities contain already marked up text.  Also note that unlike tags,
+entities are by default case sensitive.
+
+
+
+
+
+
+
+An entity has the following form:
+
+
+
+
+
+   &entity;
+
+
+
+=over 2
+
+=item * define-entity 
+
+C<I<name>> 
+
+=back
+
+
+
+
+
+
+This function lets you define your own entities.
+First argument is the entity name. Replacement text is the function body.
+
+
+
+
+
+Source:
+
+   <define-entity foo>bar</define-entity>
+   &foo;
+   
+
+Output:
+
+   bar
+   
+
+
+
+
+=head2 Variables
+
+
+
+
+Variables are a special case of simple tags, because they do not accept
+attributes. In fact their use is different, because variables contain
+text whereas macros act like operators.
+A nice feature concerning variables is their manipulation as arrays.
+Indeed variables can be considered like newline separated lists, which
+will allow powerful manipulation functions as we will see below.
+
+
+
+
+
+
+=over 2
+
+=item * set-var C<S>
+
+C<I<name>[=I<value>]> C<[I<name>[=I<value>]] ...> 
+
+=back
+
+
+
+
+
+
+This command sets variables.
+
+
+
+
+
+
+=over 2
+
+=item * set-var-verbatim C<S>C<V>
+
+C<I<name>[=I<value>]> C<[I<name>[=I<value>]] ...> 
+
+=back
+
+
+
+
+
+
+As above but attributes are read verbatim.
+
+
+
+
+
+
+=over 2
+
+=item * set-var-x 
+
+C<name=I<variable-name>> 
+
+=back
+
+
+
+
+
+
+This command assigns a variable the value of the body of the
+command. This is particularly useful when variable values contain
+newlines and/or quotes.
+
+
+
+
+
+
+
+Note that the variable can not be indexed with this command.
+Note also, that this command behaves as set-var-verbatim: The body
+is not expanded until the variable is shown with get-var.
+
+
+
+
+
+
+=over 2
+
+=item * get-var C<S>
+
+C<I<name>> C<[I<name>] ...> 
+
+=back
+
+
+
+
+
+
+Show variable contents. If a numeric value within square brackets is
+appended to a variable name, it represents the index of an array.
+The first index of arrays is 0 by convention.
+
+
+
+
+
+Source:
+
+   <set-var version="0.10.1" />
+   This is version <get-var version />
+   <set-var-x name="osversion">Operating sytem is
+   "<include command="uname" /><include command="uname -r" />"</set-var-x>
+   <get-var osversion />
+   
+
+Output:
+
+   This is version 0.10.1
+   
+Operating sytem is
+   "Linux
+   3.18.9-hardened
+   "
+   
+
+
+
+
+Source:
+
+   <set-var foo="0
+   1
+   2
+   3" />
+   <get-var foo[2] foo[0] foo />
+   
+
+Output:
+
+   200
+   1
+   2
+   3
+   
+
+
+
+
+
+=over 2
+
+=item * get-var-once C<S>C<V>
+
+C<I<name>> C<[I<name>] ...> 
+
+=back
+
+
+
+
+
+
+As above but attributes are not expanded.
+
+
+
+
+
+Source:
+
+   <define-tag foo>0.10.1</define-tag>
+   <set-var version="<foo/>" />;;;
+   Here is version <get-var version />
+   <set-var-verbatim version="<foo/>" />;;;
+   Here is version <get-var version />
+   <set-var-verbatim version="<foo/>" />;;;
+   Here is version <get-var-once version />
+   
+
+Output:
+
+   Here is version 0.10.1
+   Here is version 0.10.1
+   Here is version <foo/>
+   
+
+
+
+
+
+=over 2
+
+=item * preserve C<S>
+
+C<I<name>> C<[I<name>] ...> 
+
+=back
+
+
+
+
+
+
+All variables are global, there is no variable or macro scope.
+For this reason a stack is used to preserve variables.  When this
+command is invoked, arguments are names of variables, whose values
+are put at the top of the stack and variables are reset to an
+empty string.
+
+
+
+
+
+
+=over 2
+
+=item * restore C<S>
+
+C<I<name>> C<[I<name>] ...> 
+
+=back
+
+
+
+
+
+
+This is the opposite: arguments are names of variables, which are set to
+the value found at the top of the stack, and stack is popped down.
+
+
+
+
+
+
+B<Note:> 
+The C<preserve> tag pushes its last argument first, whereas
+C<restore> first pops its first argument.
+
+
+
+
+
+
+Source:
+
+   <define-tag foo whitespace=delete>
+   <preserve src name text />
+   <set-var %attributes />
+   Inside: src=<get-var src /> name=<get-var name /> text=<get-var text />
+   <restore  src name text />
+   </define-tag>
+   <set-var src=foo.png text="Hello, World!" />
+   Before: src=<get-var src /> name=<get-var name /> text=<get-var text />
+   <foo src=bar name=quux />
+   After: src=<get-var src /> name=<get-var name /> text=<get-var text />
+   
+
+Output:
+
+   Before: src=foo.png name= text=Hello, World!
+   Inside: src=bar name=quux text=
+   After: src=foo.png name= text=Hello, World!
+   
+
+
+
+
+
+=over 2
+
+=item * unset-var C<S>
+
+C<I<name>> C<[I<name>] ...> 
+
+=back
+
+
+
+
+
+
+Undefine variables.
+
+
+
+
+
+
+=over 2
+
+=item * var-exists C<S>
+
+C<I<name>> 
+
+=back
+
+
+
+
+
+
+Returns C<true> when this variable exists.
+
+
+
+
+
+
+=over 2
+
+=item * increment C<S>
+
+C<I<name>> C<[by=I<value>]> 
+
+=back
+
+
+
+
+
+
+Increment the variable whose name is the first argument.  Default
+increment is one.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<by=I<value>>
+
+
+Change increment amount.
+
+
+
+
+
+=back
+
+
+
+
+Source:
+
+   <set-var i=10 />
+   <get-var i />
+   <increment i /><get-var i />
+   <increment i by="-3" /><get-var i />
+   
+
+Output:
+
+   10
+   11
+   8
+   
+
+
+
+
+
+=over 2
+
+=item * decrement C<S>
+
+C<I<name>> C<[by=I<value>]> 
+
+=back
+
+
+
+
+
+
+Decrement the variable whose name is the first argument.  Default
+decrement is one.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<by=I<value>>
+
+
+Change decrement amount.
+
+
+
+
+
+=back
+
+
+
+
+Source:
+
+   <set-var i=10 />
+   <get-var i />
+   <decrement i /><get-var i />
+   <decrement i by="3" /><get-var i />
+   
+
+Output:
+
+   10
+   9
+   6
+   
+
+
+
+
+
+=over 2
+
+=item * copy-var C<S>
+
+C<I<src>> C<I<dest>> 
+
+=back
+
+
+
+
+
+
+Copy a variable into another.
+
+
+
+
+
+Source:
+
+   <set-var i=10 />
+   <copy-var i j />
+   <get-var j />
+   
+
+Output:
+
+   10
+   
+
+
+
+
+
+=over 2
+
+=item * defvar C<S>
+
+C<I<name>> C<I<value>> 
+
+=back
+
+
+
+
+
+
+If this variable is not defined or is defined to an empty string, then
+it is set to the second argument.
+
+
+
+
+
+Source:
+
+   <unset-var title />
+   <defvar title "Title" /><get-var title />
+   <defvar title "New title" /><get-var title />
+   
+
+Output:
+
+   Title
+   Title
+   
+
+
+
+
+
+=over 2
+
+=item * symbol-info C<S>
+
+C<I<name>> 
+
+=back
+
+
+
+
+
+
+Show informations on symbols.  If it is a variable name, the C<STRING> word is printed as well as the number of lines contained within
+this variable.
+
+If it is a macro name, one of the following messages is printed:
+C<PRIM COMPLEX>, C<PRIM TAG>,
+C<USER COMPLEX> or C<USER TAG>
+
+
+
+
+
+
+
+Source:
+
+   <set-var x="0\n1\n2\n3\n4" />
+   <define-tag foo>bar</define-tag>
+   <define-tag bar endtag=required>quux</define-tag>
+   <symbol-info x />
+   <symbol-info symbol-info />
+   <symbol-info define-tag />
+   <symbol-info foo />
+   <symbol-info bar />
+   
+
+Output:
+
+   STRING
+   5
+   PRIM TAG
+   PRIM COMPLEX
+   USER TAG
+   USER COMPLEX
+   
+
+
+
+
+
+=head2 String Functions
+
+
+
+=over 2
+
+=item * string-length C<S>
+
+C<I<string>> 
+
+=back
+
+
+
+
+
+
+Prints the length of the string.
+
+
+
+
+
+Source:
+
+   <set-var foo="0
+   1
+   2
+   3" />;;;
+   <string-length <get-var foo /> />
+   <set-var foo="0 1 2 3" />;;;
+   <set-var l=<string-length <get-var foo /> /> />;;;
+   <get-var l />
+   
+
+Output:
+
+   7
+   7
+   
+
+
+
+
+
+=over 2
+
+=item * downcase C<S>
+
+C<I<string>> 
+
+=back
+
+
+
+
+
+
+Convert to lowercase letters.
+
+
+
+
+
+Source:
+
+   <downcase "Does it work?" />
+   
+
+Output:
+
+   does it work?
+   
+
+
+
+
+
+=over 2
+
+=item * upcase C<S>
+
+C<I<string>> 
+
+=back
+
+
+
+
+
+
+Convert to uppercase letters.
+
+
+
+
+
+Source:
+
+   <upcase "Does it work?" />
+   
+
+Output:
+
+   DOES IT WORK?
+   
+
+
+
+
+
+=over 2
+
+=item * capitalize C<S>
+
+C<I<string>> 
+
+=back
+
+
+
+
+
+
+Convert to a title, with a capital letter at the beginning of every
+word.
+
+
+
+
+
+Source:
+
+   <capitalize "Does it work?" />
+   
+
+Output:
+
+   Does It Work?
+   
+
+
+
+
+
+=over 2
+
+=item * substring C<S>
+
+C<I<string>> C<[I<start> [I<end>]]> 
+
+=back
+
+
+
+
+
+
+Extracts a substring from a string.  First argument is original string,
+second and third are respectively start and end indexes.  By convention
+first character has a null index.
+
+
+
+
+
+Source:
+
+   <set-var foo="abcdefghijk" />
+   <substring <get-var foo /> 4 />
+   <substring <get-var foo /> 4 6 />
+   
+
+Output:
+
+   efghijk
+   ef
+   
+
+
+
+
+
+=over 2
+
+=item * string-eq C<S>
+
+C<I<string1>> C<I<string2>> C<[caseless=true]> 
+
+=back
+
+
+
+
+
+
+Returns C<true> if first two arguments are equal.
+
+
+
+
+
+Source:
+
+   1:<string-eq "aAbBcC" "aabbcc" />
+   2:<string-eq "aAbBcC" "aAbBcC" />
+   
+
+Output:
+
+   1:
+   2:true
+   
+
+
+
+
+
+=over 4
+
+
+
+=item C<caseless=true>
+
+
+Comparison is case insensitive.
+
+
+
+
+
+=back
+
+
+
+
+Source:
+
+   1:<string-eq "aAbBcC" "aabbcc" caseless=true />
+   2:<string-eq "aAbBcC" "aAbBcC" caseless=true />
+   
+
+Output:
+
+   1:true
+   2:true
+   
+
+
+
+
+
+=over 2
+
+=item * string-neq C<S>
+
+C<I<string1>> C<I<string2>> C<[caseless=true]> 
+
+=back
+
+
+
+
+
+
+Returns C<true> if the first two arguments are not equal.
+
+
+
+
+
+Source:
+
+   1:<string-neq "aAbBcC" "aabbcc" />
+   2:<string-neq "aAbBcC" "aAbBcC" />
+   
+
+Output:
+
+   1:true
+   2:
+   
+
+
+
+
+
+=over 4
+
+
+
+=item C<caseless=true>
+
+
+Comparison is case insensitive.
+
+
+
+
+
+=back
+
+
+
+
+Source:
+
+   1:<string-neq "aAbBcC" "aabbcc" caseless=true />
+   2:<string-neq "aAbBcC" "aAbBcC" caseless=true />
+   
+
+Output:
+
+   1:
+   2:
+   
+
+
+
+
+
+=over 2
+
+=item * string-compare C<S>
+
+C<I<string1>> C<I<string2>> C<[caseless=true]> 
+
+=back
+
+
+
+
+
+
+Compares two strings and returns one of the values less,
+greater or equal depending on this comparison.
+
+
+
+
+
+Source:
+
+   1:<string-compare "aAbBcC" "aabbcc" />
+   2:<string-compare "aAbBcC" "aAbBcC" />
+   
+
+Output:
+
+   1:less
+   2:equal
+   
+
+
+
+
+
+=over 4
+
+
+
+=item C<caseless=true>
+
+
+Comparison is case insensitive.
+
+
+
+
+
+=back
+
+
+
+
+Source:
+
+   1:<string-compare "aAbBcC" "aabbcc" caseless=true />
+   
+
+Output:
+
+   1:equal
+   
+
+
+
+
+
+=over 2
+
+=item * char-offsets C<S>
+
+C<I<string>> C<I<character>> C<[caseless=true]> 
+
+=back
+
+
+
+
+
+
+Prints an array containing indexes where the character appear in the
+string.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<caseless=true>
+
+
+Comparison is case insensitive.
+
+
+
+
+
+=back
+
+
+
+
+Source:
+
+   1:<char-offsets "abcdAbCdaBcD" a />
+   2:<char-offsets "abcdAbCdaBcD" a caseless=true />
+   
+
+Output:
+
+   1:0
+   8
+   2:0
+   4
+   8
+   
+
+
+
+
+
+=over 2
+
+=item * printf C<S>
+
+C<I<format>> C<I<string>> C<[I<string> ...]> 
+
+=back
+
+
+
+
+
+
+Prints according to a given format. Currently only the
+C<%s> flag character is recognized, and  C<$> extension
+is supported to change order of arguments.
+
+
+
+
+
+Source:
+
+   1:<printf "foo %s bar %s" baz 10 />
+   2:<printf "foo %2$s bar %1$s" baz 10 />
+   
+
+Output:
+
+   1:foo baz bar 10
+   2:foo 10 bar baz
+   
+
+
+
+
+=head2 Regular Expressions
+
+
+
+
+Regular expression support is provided by the PCRE (Perl Compatible
+Regular Expressions) library package, which is open source software,
+copyright by the University of Cambridge.
+This is a very nice piece of software, latest versions are available at
+ C<E<lt>URL:ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/E<gt>>.
+
+
+
+
+
+
+
+Before version 1.0.6, POSIX regular expressions were implemented.
+For this reason, the following macros recognize two attributes,
+C<caseless=true> and C<singleline=true|false>.
+But Perl allows a much better control on regular expressions with so
+called modifiers, which are assed to the new C<reflags>
+attribute.  It may contain one or more modifiers:
+
+
+
+
+
+
+=over 2
+
+
+
+
+=item B<i> Matching is case insensitive
+
+
+
+
+=item B<m> Treat string as multiple lines. When set, a C<^> matches
+any beginning of line, and C<$> any end of line.  By default,
+they match begin and end of string.
+
+
+
+
+=item B<s> Treat string as single line. A dot (C<.>) may also
+match a newline, whereas it does not by default.
+
+
+
+
+=item B<x> Allow formatted regular expression, that means whitespaces,
+newlines and comments are removed from regular expression before
+processing.
+
+
+
+
+=back
+
+
+
+
+
+B<Note:> 
+Attribute C<singleline=true> is a synonym for the C<s>
+modifier, whereas C<singleline=false> is a synonym for the
+C<m> modifier.  This behaviour was different up to B<mp4h> 1.0.6.
+
+
+
+
+
+
+=over 2
+
+=item * subst-in-string C<S>
+
+C<I<string>> C<I<regexp>> C<[I<replacement>]> C<[caseless=true]> C<[singleline=true|false]> C<[reflags=[imsx]]> 
+
+=back
+
+
+
+
+
+
+Replace a regular expression in a string by a replacement text.
+
+
+
+
+
+Source:
+
+   <set-var foo="abcdefghijk" />
+   <subst-in-string <get-var foo /> "[c-e]" />
+   <subst-in-string <get-var foo /> "([c-e])" "\\1 " />
+   
+
+Output:
+
+   abfghijk
+   abc d e fghijk
+   
+
+
+
+
+Source:
+
+   <set-var foo="abcdefghijk\nabcdefghijk\nabcdefghijk" />
+   <subst-in-string <get-var foo /> ".$" "" />
+   <subst-in-string <get-var foo /> ".$" "" singleline=false />
+   <subst-in-string <get-var foo /> "
+      ([a-c]) | [0-9]
+        " ":\\1:" reflags=x />
+   
+
+Output:
+
+   abcdefghijk
+   abcdefghijk
+   abcdefghij
+   abcdefghij
+   abcdefghij
+   abcdefghij
+   :a::b::c:defghijk
+   :a::b::c:defghijk
+   :a::b::c:defghijk
+   
+
+
+
+
+
+=over 2
+
+=item * subst-in-var C<S>
+
+C<I<name>> C<I<regexp>> C<[I<replacement>]> C<[caseless=true]> C<[singleline=true|false]> C<[reflags=[imsx]]> 
+
+=back
+
+
+
+
+
+
+Performs substitutions inside variable content.
+
+
+
+
+
+
+=over 2
+
+=item * match C<S>
+
+C<I<string>> C<I<regexp>> C<[caseless=true]> C<[singleline=true|false]> C<[reflags=[imsx]]> C<[action=report|extract|delete|startpos|endpos|length]> 
+
+=back
+
+
+
+
+
+=over 4
+
+
+
+=item C<action=report>
+
+
+Prints C<true> if string contains regexp.
+
+
+
+
+
+=item C<action=extract>
+
+
+Prints the expression matching regexp in string.
+
+
+
+
+
+=item C<action=delete>
+
+
+Prints the string without the expression matching regexp in string.
+
+
+
+
+
+=item C<action=startpos>
+
+
+Prints the first char of the expression matching regexp in string.
+If there is no match, returns C<-1>.
+
+
+
+
+
+=item C<action=endpos>
+
+
+Prints the last char of the expression matching regexp in string.
+If there is no match, returns C<-1>.
+
+
+
+
+
+=item C<action=length>
+
+
+Prints the length of the expression matching regexp in string.
+
+
+
+
+
+=back
+
+
+
+
+Source:
+
+   1:<match "abcdefghijk" "[c-e]+" />
+   2:<match "abcdefghijk" "[c-e]+" action=extract />
+   3:<match "abcdefghijk" "[c-e]+" action=delete />
+   4:<match "abcdefghijk" "[c-e]+" action=startpos />
+   5:<match "abcdefghijk" "[c-e]+" action=endpos />
+   6:<match "abcdefghijk" "[c-e]+" action=length />
+   
+
+Output:
+
+   1:true
+   2:cde
+   3:abfghijk
+   4:2
+   5:5
+   6:3
+   
+
+
+
+
+=head2 Arrays
+
+
+
+
+With B<mp4h> one can easily deal with string arrays. Variables can be
+treated as a single value or as a newline separated list of strings.
+Thus after defining
+
+
+
+
+
+   
+<set-var digits="0
+   1
+   2
+   3" />
+   
+
+one can view its content or one of these values:
+
+
+
+Source:
+
+   <get-var digits />
+   <get-var digits[2] />
+   
+
+Output:
+
+   0
+   1
+   2
+   3
+   2
+   
+
+
+
+
+
+=over 2
+
+=item * array-size C<S>
+
+C<I<name>> 
+
+=back
+
+
+
+
+
+
+Returns an array size which is the number of lines present in the
+variable.
+
+
+
+
+
+Source:
+
+   <array-size digits />
+   
+
+Output:
+
+   4
+   
+
+
+
+
+
+=over 2
+
+=item * array-push C<S>
+
+C<I<name>> C<I<value>> 
+
+=back
+
+
+
+
+
+
+Add a value (or more if this value contains newlines) at the end of an
+array.
+
+
+
+
+
+Source:
+
+   <array-push digits "10\n11\n12" />
+   <get-var digits />
+   
+
+Output:
+
+   0
+   1
+   2
+   3
+   10
+   11
+   12
+   
+
+
+
+
+
+=over 2
+
+=item * array-pop C<S>
+
+C<I<name>> 
+
+=back
+
+
+
+
+
+
+Remove the toplevel value of an array and returns this string.
+
+
+
+
+
+
+=over 2
+
+=item * array-topvalue C<S>
+
+C<I<name>> 
+
+=back
+
+
+
+
+
+
+Prints the last entry of an array.
+
+
+
+
+
+Source:
+
+   <array-topvalue digits />
+   
+
+Output:
+
+   12
+   
+
+
+
+
+
+=over 2
+
+=item * array-add-unique C<S>
+
+C<I<name>> C<I<value>> C<[caseless=true]> 
+
+=back
+
+
+
+
+
+
+Add a value at the end of an array if this value is not already present
+in this variable.
+
+
+
+
+
+Source:
+
+   <array-add-unique digits 2 />
+   <get-var digits />
+   
+
+Output:
+
+   0
+   1
+   2
+   3
+   10
+   11
+   12
+   
+
+
+
+
+
+=over 4
+
+
+
+=item C<caseless=true>
+
+
+Comparison is case insensitive.
+
+
+
+
+
+=back
+
+
+
+
+
+=over 2
+
+=item * array-concat C<S>
+
+C<I<name1>> C<[I<name2>] ...> 
+
+=back
+
+
+
+
+
+
+Concatenates all arrays into the first one.
+
+
+
+
+
+Source:
+
+   <set-var foo="foo" />
+   <set-var bar="bar" />
+   <array-concat foo bar /><get-var foo />
+   
+
+Output:
+
+   foo
+   bar
+   
+
+
+
+
+
+=over 2
+
+=item * array-member C<S>
+
+C<I<name>> C<I<value>> C<[caseless=true]> 
+
+=back
+
+
+
+
+
+
+If value is contained in array, returns its index otherwise returns -1.
+
+
+
+
+
+Source:
+
+   <array-member digits 11 />
+   
+
+Output:
+
+   5
+   
+
+
+
+
+
+=over 4
+
+
+
+=item C<caseless=true>
+
+
+Comparison is case insensitive.
+
+
+
+
+
+=back
+
+
+
+
+
+=over 2
+
+=item * array-shift C<S>
+
+C<I<name>> C<I<offset>> C<[start=I<start>]> 
+
+=back
+
+
+
+
+
+
+Shifts an array.  If offset is negative, indexes below 0 are lost.
+If offset is positive, first indexes are filled with empty strings.
+
+
+
+
+
+Source:
+
+   <array-shift digits 2 />
+   Now: <get-var digits />
+   <array-shift digits -4 />
+   And: <get-var digits />
+   
+
+Output:
+
+   Now: 
+   
+0
+   1
+   2
+   3
+   10
+   11
+   12
+   
+And: 2
+   3
+   10
+   11
+   12
+   
+
+
+
+
+
+=over 4
+
+
+
+=item C<start=I<start>>
+
+
+Change origin of shifts (default is 0).
+
+Source:
+
+   <array-shift digits -2 start=2 /><get-var digits />
+   
+
+Output:
+
+   2
+   3
+   12
+   
+
+
+
+
+
+
+
+=back
+
+
+
+
+
+=over 2
+
+=item * sort C<S>
+
+C<I<name>> C<[caseless=true]> C<[numeric=true]> C<[sortorder=reverse]> 
+
+=back
+
+
+
+
+
+
+Sort lines of an array in place. Default is to sort lines
+alphabetically.
+
+
+
+
+
+Source:
+
+   <sort digits /><get-var digits />
+   
+
+Output:
+
+   12
+   2
+   3
+   
+
+
+
+
+
+=over 4
+
+
+
+=item C<caseless=true>
+
+
+Comparison is case insensitive.
+
+
+
+
+
+=item C<numeric=true>
+
+
+Sort lines numerically
+
+Source:
+
+   <sort digits numeric=true /><get-var digits />
+   
+
+Output:
+
+   2
+   3
+   12
+   
+
+
+
+
+
+
+
+=item C<sortorder=reverse>
+
+
+Reverse sort order
+
+Source:
+
+   <sort digits numeric=true sortorder=reverse />;;;
+   <get-var digits />
+   
+
+Output:
+
+   12
+   3
+   2
+   
+
+
+
+
+
+
+
+=back
+
+
+
+
+=head2 Numerical operators
+
+
+
+
+These operators perform basic arithmetic operations.  When all operands
+are integers result is an integer too, otherwise it is a float.  These
+operators are self-explanatory.
+
+
+
+
+
+
+=over 2
+
+=item * add C<S>
+
+C<I<number1>> C<I<number2>> C<[I<number3>] ...> 
+
+=back
+
+
+
+
+
+=over 2
+
+=item * substract C<S>
+
+C<I<number1>> C<I<number2>> C<[I<number3>] ...> 
+
+=back
+
+
+
+
+
+=over 2
+
+=item * multiply C<S>
+
+C<I<number1>> C<I<number2>> C<[I<number3>] ...> 
+
+=back
+
+
+
+
+
+=over 2
+
+=item * divide C<S>
+
+C<I<number1>> C<I<number2>> C<[I<number3>] ...> 
+
+=back
+
+
+
+
+
+=over 2
+
+=item * min C<S>
+
+C<I<number1>> C<I<number2>> C<[I<number3>] ...> 
+
+=back
+
+
+
+
+
+=over 2
+
+=item * max C<S>
+
+C<I<number1>> C<I<number2>> C<[I<number3>] ...> 
+
+=back
+
+
+
+
+Source:
+
+   <add 1 2 3 4 5 6 />
+   <add 1 2 3 4 5 6. />
+   
+
+Output:
+
+   21
+   21.000000
+   
+
+
+
+
+
+Source:
+
+   <define-tag factorial whitespace=delete>
+   <ifeq %0 1 1 <multiply %0 "<factorial <substract %0 1 /> />" /> />
+   </define-tag>
+   <factorial 6 />
+   
+
+Output:
+
+   720
+   
+
+
+
+
+
+=over 2
+
+=item * modulo C<S>
+
+C<I<number1>> C<I<number2>> 
+
+=back
+
+
+
+
+
+
+Unlike functions listed above the modulo function cannot handle more
+than 2 arguments, and these arguments must be integers.
+
+
+
+
+
+Source:
+
+   <modulo 345 7 />
+   
+
+Output:
+
+   2
+   
+
+
+
+
+
+
+Those functions compare two numbers and returns C<true> when this
+comparison is true.  If one argument is not a number, comparison
+is false.
+
+
+
+
+
+
+=over 2
+
+=item * gt C<S>
+
+C<I<number1>> C<I<number2>> 
+
+=back
+
+
+
+
+
+
+Returns C<true> if first argument is greater than second.
+
+
+
+
+
+
+=over 2
+
+=item * lt C<S>
+
+C<I<number1>> C<I<number2>> 
+
+=back
+
+
+
+
+
+
+Returns C<true> if first argument is lower than second.
+
+
+
+
+
+
+=over 2
+
+=item * eq C<S>
+
+C<I<number1>> C<I<number2>> 
+
+=back
+
+
+
+
+
+
+Returns C<true> if arguments are equal.
+
+
+
+
+
+
+=over 2
+
+=item * neq C<S>
+
+C<I<number1>> C<I<number2>> 
+
+=back
+
+
+
+
+
+
+Returns C<true> if arguments are not equal.
+
+
+
+
+
+=head2 Relational operators
+
+
+
+=over 2
+
+=item * not C<S>
+
+C<I<string>> 
+
+=back
+
+
+
+
+
+
+Returns C<true> if string is empty, otherwise returns an empty string.
+
+
+
+
+
+
+=over 2
+
+=item * and C<S>
+
+C<I<string>> C<[I<string>] ...> 
+
+=back
+
+
+
+
+
+
+Returns the last argument if all arguments are non empty.
+
+
+
+
+
+
+=over 2
+
+=item * or C<S>
+
+C<I<string>> C<[I<string>] ...> 
+
+=back
+
+
+
+
+
+
+Returns the first non empty argument.
+
+
+
+
+
+=head2 Flow functions
+
+
+
+=over 2
+
+=item * group C<S>C<V>
+
+C<I<expression>> C<[I<expression>] ...> C<[separator=I<string>]> 
+
+=back
+
+
+
+
+
+
+This function groups multiple statements into a single one.  Some
+examples will be seen below with conditional operations.
+
+
+
+
+
+
+
+A less intuitive but very helpful use of this macro is to preserve newlines
+when C<whitespace=delete> is specified.
+
+
+
+
+
+
+Source:
+
+   <define-tag text1>
+   Text on
+   3 lines without
+   whitespace=delete
+   </define-tag>
+   <define-tag text2 whitespace=delete>
+   Text on
+   3 lines with
+   whitespace=delete
+   </define-tag>
+   <define-tag text3 whitespace=delete>
+   <group "Text on
+   3 lines with
+   whitespace=delete" />
+   </define-tag>
+   <text1/>
+   <text2/>
+   <text3/>
+   
+
+Output:
+
+   Text on
+   3 lines without
+   whitespace=delete
+   
+Text on3 lines withwhitespace=delete
+   Text on
+   3 lines with
+   whitespace=delete
+   
+
+
+
+
+
+
+Note that newlines are suppressed in C<text2> and result is
+certainly unwanted.
+
+
+
+
+
+
+=over 2
+
+=item * compound 
+
+C<I<expression>> C<[I<expression>] ...> C<[separator=I<string>]> 
+
+=back
+
+
+
+
+
+
+Like C<group>,  but this tag is complex.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<separator=I<string>>
+
+
+By default arguments are put aside.  This attribute define a separator
+inserted between arguments.
+
+
+
+
+
+=back
+
+
+
+
+
+=over 2
+
+=item * disjoin C<S>
+
+C<I<expression>> 
+
+=back
+
+
+
+
+
+
+Does the opposite job to C<group>, its argument is no more
+treated as a single object when processed by another command.
+
+
+
+
+
+
+=over 2
+
+=item * noexpand C<S>C<V>
+
+C<I<command>> C<[I<command>] ...> 
+
+=back
+
+
+
+
+
+
+Prints its arguments without expansion.  They will never be expanded
+unless the C<expand> tag is used to cancel this C<noexpand> tag.
+
+
+
+
+
+
+=over 2
+
+=item * expand C<S>
+
+C<I<command>> C<[I<command>] ...> 
+
+=back
+
+
+
+
+
+
+Cancels the C<noexpand> tag.
+
+
+
+
+
+
+Source:
+
+   <subst-in-string "=LT=define-tag foo>bar=LT=/define-tag>" "=LT=" "<" />
+   <foo/>
+   <subst-in-string "=LT=define-tag foo>quux=LT=/define-tag>" "=LT="
+      "<noexpand "<" />" />
+   <foo/>
+   
+
+Output:
+
+   bar
+   <define-tag foo>quux</define-tag>
+   bar
+   
+
+
+
+
+
+=over 2
+
+=item * if C<S>C<V>
+
+C<I<string>> C<I<then-clause>> C<[I<else-clause>]> 
+
+=back
+
+
+
+
+
+
+If string is non empty, second argument is evaluated otherwise third
+argument is evaluated.
+
+
+
+
+
+
+Source:
+
+   <define-tag test whitespace=delete>
+   <if %0 "yes" "no" />
+   </define-tag>
+   <test "string" />
+   <test "" />
+   
+
+Output:
+
+   yes
+   no
+   
+
+
+
+
+
+=over 2
+
+=item * ifeq C<S>C<V>
+
+C<I<string1>> C<I<string2>> C<I<then-clause>> C<[I<else-clause>]> 
+
+=back
+
+
+
+
+
+
+If first two arguments are identical strings, third argument is evaluated
+otherwise fourth argument is evaluated.
+
+
+
+
+
+
+=over 2
+
+=item * ifneq C<S>C<V>
+
+C<I<string1>> C<I<string2>> C<I<then-clause>> C<[I<else-clause>]> 
+
+=back
+
+
+
+
+
+
+If first two arguments are not identical strings, third argument is
+evaluated otherwise fourth argument is evaluated.
+
+
+
+
+
+
+=over 2
+
+=item * when 
+
+C<I<string>> 
+
+=back
+
+
+
+
+
+
+When argument is not empty, its body is evaluated.
+
+
+
+
+
+
+=over 2
+
+=item * while C<V>
+
+C<I<cond>> 
+
+=back
+
+
+
+
+
+
+While condition is true, body function is evaluated.
+
+
+
+
+
+Source:
+
+   <set-var i=10 />
+   <while <gt <get-var i /> 0 />>;;;
+     <get-var i /> <decrement i />;;;
+   </while>
+   
+
+Output:
+
+   10 9 8 7 6 5 4 3 2 1 
+   
+
+
+
+
+
+=over 2
+
+=item * foreach 
+
+C<I<variable>> C<I<array>> C<[start=I<start>]> C<[end=I<end>]> C<[step=I<pas>]> 
+
+=back
+
+
+
+
+
+
+This macro is similar to the C<foreach> Perl's macro:
+a variable loops over array values and function body is evaluated for each
+value.
+
+first argument is a generic variable name, and second is the name of an
+array.
+
+
+
+
+
+Source:
+
+   <set-var x="1\n2\n3\n4\n5\n6" />
+   <foreach i x><get-var i /> </foreach>
+   
+
+Output:
+
+   1 2 3 4 5 6 
+   
+
+
+
+
+
+=over 4
+
+
+
+=item C<start=I<start>>
+
+
+Skips first indexes.
+
+Source:
+
+   <set-var x="1\n2\n3\n4\n5\n6" />
+   <foreach i x start=3><get-var i /> </foreach>
+   
+
+Output:
+
+   4 5 6 
+   
+
+
+
+
+
+
+
+=item C<end=I<end>>
+
+
+Stops after index has reached that value.
+
+Source:
+
+   <set-var x="1\n2\n3\n4\n5\n6" />
+   <foreach i x end=3><get-var i /> </foreach>
+   
+
+Output:
+
+   1 2 3 
+   
+
+
+
+
+
+
+
+=item C<step=I<step>>
+
+
+Change index increment (default is 1).
+If step is negative, array is treated in reverse order.
+
+Source:
+
+   <set-var x="1\n2\n3\n4\n5\n6" />
+   <foreach i x step=2><get-var i /> </foreach>
+   <foreach i x step=-2><get-var i /> </foreach>
+   
+
+Output:
+
+   1 3 5 
+   6 4 2 
+   
+
+
+
+
+
+
+
+=back
+
+
+
+
+
+=over 2
+
+=item * var-case C<S>C<V>
+
+C<I<var1>=I<value1> I<action1>> C<[I<var2>=I<value2> I<action2> ...> 
+
+=back
+
+
+
+
+
+
+
+This command performs multiple conditions with a single instruction.
+
+
+
+
+
+Source:
+
+   <set-var i=0 />
+   <define-tag test>
+   <var-case
+     x=1   <group <increment i /> x<get-var i /> />
+     x=2   <group <decrement i /> x<get-var i /> />
+     y=1   <group <increment i /> y<get-var i /> />
+     y=2   <group <decrement i /> y<get-var i /> />
+   />
+   </define-tag>
+   <set-var x=1 y=2 /><test/>
+   <set-var x=0 y=2 /><test/>
+   
+
+Output:
+
+   x1y0
+   
+
+   y-1
+   
+
+
+
+
+
+
+=over 2
+
+=item * break C<S>
+
+
+
+=back
+
+
+
+
+
+
+Breaks the innermost C<while> loop.
+
+
+
+
+
+Source:
+
+   <set-var i=10 />
+   <while <gt <get-var i /> 0 />>;;;
+     <get-var i /> <decrement i />;;;
+     <ifeq <get-var i /> 5 <break/> />;;;
+   </while>
+   
+
+Output:
+
+   10 9 8 7 6 
+   
+
+
+
+
+
+=over 2
+
+=item * return C<S>
+
+C<[up=number]> C<I<string>> 
+
+=back
+
+
+
+
+
+
+This command immediately exits from the innermost macro.
+A message may also be inserted.  But this macro changes token parsing
+so its use may become very hazardous in some situations.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<up=I<number>>
+
+
+This attribute determines how much levels have to be exited.  By default
+only one level is skipped.  With a null value, all current macros are
+exited from.  A negative value do the same, and stops processing current
+file.
+
+
+
+
+
+=back
+
+
+
+
+
+=over 2
+
+=item * warning C<S>
+
+C<I<string>> 
+
+=back
+
+
+
+
+
+
+Prints a warning on standard error.
+
+
+
+
+
+
+=over 2
+
+=item * exit C<S>
+
+C<[status=I<rc>]> C<[message=I<string>]> 
+
+=back
+
+
+
+
+
+
+Immediately exits program.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<message=I<string>>
+
+
+Prints a message to the standard error.
+
+
+
+
+
+=item C<status=I<rc>>
+
+
+Selects the code returned by the program (-1 by default).
+
+
+
+
+
+=back
+
+
+
+
+
+=over 2
+
+=item * at-end-of-file 
+
+
+
+=back
+
+
+
+
+
+
+This is a special command: its content is stored and will be
+expanded after end of input.
+
+
+
+
+
+=head2 File functions
+
+
+
+=over 2
+
+=item * directory-contents C<S>
+
+C<I<dirname>> C<[matching=regexp]> 
+
+=back
+
+
+
+
+
+
+Returns a newline separated list of files contained in a given directory.
+
+
+
+
+
+Source:
+
+   <directory-contents . matching=".*\\.mp4h$" />
+   
+
+Output:
+
+   mp4h.mp4h
+   
+
+
+
+
+
+=over 2
+
+=item * real-path C<S>
+
+C<patname=I<pathname>> 
+
+=back
+
+
+
+
+
+
+Resolves all symbolic links, extra ``/'' characters and references
+to /./ and /../ in pathname, and expands into the resulting absolute pathname.
+All but the last component of pathname must exist when real-path is called.
+
+
+
+
+
+
+
+This tag is particularly useful when comparing if file or directory names
+are identical.
+
+
+
+
+
+Source:
+
+   <real-path pathname=<__file__/> />
+   
+
+Output:
+
+   /mnt/home/twim/wml-2.0.11/wml_backend/p2_mp4h/doc/mp4h.mp4h
+   
+
+
+
+
+
+=over 2
+
+=item * file-exists C<S>
+
+C<I<filename>> 
+
+=back
+
+
+
+
+
+
+Returns C<true> if file exists.
+
+
+
+
+
+
+=over 2
+
+=item * get-file-properties C<S>
+
+C<I<filename>> 
+
+=back
+
+
+
+
+
+
+Returns an array of informations on this file.  These informations are:
+size, type, ctime, mtime, atime, owner and group.
+
+
+
+
+
+Source:
+
+   <get-file-properties <__file__/> />
+   
+
+Output:
+
+   68685
+   FILE
+   1435187370
+   1133459413
+   1435187491
+   twim
+   twim
+   
+
+
+
+
+
+
+=over 2
+
+=item * include C<S>
+
+C<file=I<filename> | command=I<command-line>> C<[alt=I<action>]> C<[verbatim=true]> 
+
+=back
+
+
+
+
+
+
+Insert the contents of a file in the file system - if the C<file>
+attribute is given -, or the output from executing a system command - if the
+C<command> attribute is given - into the input stream. 
+For backwards compatibility, if neither the C<file> nor the
+C<command> attributes are given, the first argument is taken
+as a file to include.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<file=I<filename>>
+
+
+
+
+
+The given file is read and inserted into the input stream.
+This attribute cannot be combined with the command attribute.
+
+
+
+
+
+
+Files are first searched in current directory, then in
+directories specified on command-line with the C<-I> option, next
+in directories listed in the C<MP4HLIB> environment
+variable (it used to be C<MP4HPATH> for versions prior to
+1.3), and last under the compile-time location
+(C</usr/local/lib/mp4h/1.3.0:/usr/local/share/mp4h>
+by default).
+
+
+
+
+
+
+
+
+=item C<command=I<command-line>>
+
+
+
+
+
+The given command line is executed on the operating system, and the output
+of it is inserted in the input stream. This attribute cannot be combined
+with the file attribute.
+
+
+
+
+
+
+The given command line is executed using the
+popen(3) standard C library routine. The command is executed using the standard
+system shell, which on Posix compliant systems is sh(1).
+
+
+
+
+
+
+
+
+=item C<alt=I<action>>
+
+
+If file is not found, this alternate action is handled. If this atribute
+is not set and file is not found, then an error is raised. This attribute has no effect
+when the command attribute is specified.
+
+
+
+
+
+=item C<verbatim=true>
+
+
+File content is included without expansion.
+This is similar to using the B<m4> undivert macro with a filename as argument.
+
+
+
+
+
+=back
+
+
+
+
+Source:
+
+   <include command="uname -a" />
+   
+
+Output:
+
+   Linux localhost 3.18.9-hardened #7 SMP Sat May 9 07:50:31 2015 x86_64 Intel(R) Core(TM) i5-3210M CPU @ 2.50GHz GenuineIntel GNU/Linux
+   
+
+
+
+
+
+
+
+=over 2
+
+=item * use C<S>
+
+C<name=I<package>> 
+
+=back
+
+
+
+
+
+
+Load definitions from a package file.
+
+
+
+
+
+
+
+=over 2
+
+=item * comment 
+
+
+
+=back
+
+
+
+
+
+
+This tag does nothing, its body is simply discarded.
+
+
+
+
+
+
+=over 2
+
+=item * set-eol-comment C<S>
+
+C<[I<string>]> 
+
+=back
+
+
+
+
+
+
+Change comment characters.
+
+
+
+
+
+
+=over 2
+
+=item * set-quotes C<S>
+
+C<[I<string> I<string>]> C<[display=visible]> 
+
+=back
+
+
+
+
+
+
+By default, all characters between C<<@[> and
+C<]@>> pairs are read without 
+parsing.  When called without argument, this macro inhibates this
+feature.  When called with two arguments, it redefines begin and end
+delimiters.  Begin delimiter must begin with a left-angle bracket, and
+end delimiter must end with a right-angle bracket.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<display=visible>
+
+
+Delimiters are also written into output.
+
+
+
+
+
+=back
+
+
+
+
+=head2 Diversion functions
+
+
+
+
+Diversions are a way of temporarily saving output.
+The output of B<mp4h> can at any time be diverted to a temporary file,
+and be reinserted into the output stream, undiverted, again at a later time. 
+
+
+
+
+
+
+
+Numbered diversions are counted from 0 upwards,
+diversion number 0 being the normal output stream.
+The number of simultaneous diversions is limited mainly by the memory used
+to describe them, because B<mp4h> tries to keep diversions in memory.
+However, there is a limit to the overall memory usable by all diversions
+taken altogether. When this maximum is about to be exceeded, a
+temporary file is opened to receive the contents of the biggest
+diversion still in memory, freeing this memory for other diversions.
+So, it is theoretically possible that the number of diversions be
+limited by the number of available file descriptors.
+
+
+
+
+
+
+=over 2
+
+=item * divert C<S>
+
+C<[ divnum=I<diversion-number> ]> 
+
+=back
+
+
+
+
+
+
+Output is diverted using this tag, where diversion-number is the diversion
+to be used. If the divnum attribute is left out, diversion-number is assumed
+to be zero.
+If output is diverted to a non-existent diversion, it is simply discarded.
+This can be used to suppress unwanted output. See the example below.
+
+
+
+
+
+
+
+When all B<mp4h> input will have been processed, all existing diversions
+are automatically undiverted, in numerical order. 
+
+
+
+
+
+
+
+Several calls of divert with the same argument do not overwrite the previous diverted text, but append to it.
+
+
+
+
+
+Source:
+
+   <divert divnum="-1"/>
+   This is sent nowhere...
+   <divert/>
+   This is output.
+   
+
+Output:
+
+   This is sent nowhere...
+   
+This is output.
+   
+
+
+
+
+
+=over 2
+
+=item * undivert C<S>
+
+C<[ divnum=I<diversion-number> ]> 
+
+=back
+
+
+
+
+
+
+This tag explicitly undiverts diverted text saved in the diversion with the
+specified number. If the divnum attribute is not given, all diversions
+are undiverted, in numerical order.
+
+
+
+
+
+
+
+When diverted text is undiverted, it is not reread by B<mp4h>,
+but rather copied directly to the current output. It is therefore
+not an error to undivert into a diversion.
+
+
+
+
+
+
+
+Unlike B<m4>, the B<mp4h> undivert tag does not allow a file name
+as argument. The same can be accomplished with the include tag
+with the verbatim="true" attribute.
+
+
+
+
+
+Source:
+
+   <divert divnum="1"/>
+   This text is diverted.
+   <divert/>
+   This text is not diverted.
+   <undivert divnum="1"/>
+   
+
+Output:
+
+   This text is diverted.
+   
+This text is not diverted.
+   
+
+
+
+
+
+
+=over 2
+
+=item * divnum C<S>
+
+
+
+=back
+
+
+
+
+
+
+This tag expands to the number of the current diversion.
+
+
+
+
+
+Source:
+
+   Initial <divnum/>
+   <divert divnum="1"/>
+   Diversion one: <divnum/>
+   <divert divnum="2"/>
+   Diversion two: <divnum/>
+   <divert/>
+   
+
+Output:
+
+   Initial 0
+   
+Diversion one: 1
+   
+Diversion two: 2
+   
+
+
+
+
+=head2 Debugging functions
+
+
+
+
+When constructs become complex it could be hard to debug them.
+Functions listed below are very useful when you could not figure what is
+wrong.  These functions are not perfect yet and must be improved in
+future releases.
+
+
+
+
+
+
+=over 2
+
+=item * function-def C<S>
+
+C<I<name>> 
+
+=back
+
+
+
+
+
+
+Prints the replacement text of a user defined macro. For instance, the
+macro used to generate all examples of this documentation is
+
+
+
+
+Source:
+
+   <function-def example />
+   
+
+Output:
+
+   <set-var-verbatim verb-body=%ubody /><subst-in-var verb-body "<" "<" />
+   <subst-in-var verb-body ">" ">" /><subst-in-var verb-body "^\n*" "" /><subst-in-var verb-body "^" "   " reflags=m /><set-var body=%body /><subst-in-var body "<three-colon/>[^;\n]*\n[ \t]*" "" /><subst-in-var body "<three-colon/>$" "" reflags=m /><subst-in-var body "^\n*" "" /><subst-in-var body "^" "   " reflags=m /><group "Source:
+   
+<get-var-once verb-body />
+   
+Output:
+   
+<get-var-once body />
+   
+" />
+   
+
+
+
+
+
+=over 2
+
+=item * debugmode C<S>
+
+C<I<string>> 
+
+=back
+
+
+
+
+
+
+This comand acts like the C<-d> flag but can be ynamically
+changed.
+
+
+
+
+
+
+=over 2
+
+=item * debugfile C<S>
+
+C<I<filename>> 
+
+=back
+
+
+
+
+
+
+Selects a file where debugging messages are diverted.
+If this filename is empty, debugging messages are sent back to standard
+error, and if it is set to C<-> these messages are discarded.
+
+
+
+
+
+
+B<Note:> 
+There is no way to print these debugging messages into the document
+being processed.
+
+
+
+
+
+
+=over 2
+
+=item * debugging-on C<S>
+
+C<I<name>> C<[I<name>] ...> 
+
+=back
+
+
+
+
+
+
+Declare these macros traced, i.e. informations about these macros will
+be printed if C<-d> flag or C<debugmode> macro are used.
+
+
+
+
+
+
+=over 2
+
+=item * debugging-off C<S>
+
+C<I<name>> C<[I<name>] ...> 
+
+=back
+
+
+
+
+
+
+These macros are no more traced.
+
+
+
+
+
+=head2 Miscellaneous
+
+
+
+=over 2
+
+=item * __file__ C<S>
+
+C<[I<name>]> 
+
+=back
+
+
+
+
+
+
+Without argument this macro prints current input filename.
+With an argument, this macro sets the string returned by future
+invocation of this macro.
+
+
+
+
+
+
+=over 2
+
+=item * __line__ C<S>
+
+C<[I<number>]> 
+
+=back
+
+
+
+
+
+Without argument this macro prints current number line in input file.
+With an argument, this macro sets the number returned by future
+invocation of this macro.
+
+
+
+
+
+Source:
+
+   This is <__file__/>, line <__line__/>.
+   
+
+Output:
+
+   This is ./mp4h.mp4h, line 2201.
+   
+
+
+
+
+
+
+If you closely look at source code you will see that this number is
+wrong. Indeed the number line is the end of the entire block containing
+this instruction.
+
+
+
+
+
+
+=over 2
+
+=item * __version__ C<S>
+
+
+
+=back
+
+
+
+
+
+
+Prints the version of B<mp4h>.
+
+
+
+
+
+
+=over 2
+
+=item * dnl C<S>
+
+
+
+=back
+
+
+
+
+
+
+Discard all characters until newline is reached. This macro ensures that
+following string is a comment and does not depend of the value of
+comment characters.
+
+
+
+
+
+Source:
+
+   <dnl/>This is a comment
+   foo
+   <dnl/>This is a comment
+   bar
+   
+
+Output:
+
+   foo
+   bar
+   
+
+
+
+
+
+=over 2
+
+=item * date C<S>
+
+C<[epoch]> 
+
+=back
+
+
+
+
+
+
+Prints local time according to the epoch passed on argument.  If there
+is no argument, current local time is printed.
+
+
+
+
+
+
+=over 4
+
+
+
+=item C<time>
+
+
+An epoch time specification.
+
+
+
+
+=item C<format>
+
+
+A format specification as used with the strftime(3) C library routine.
+
+
+
+
+
+=back
+
+
+
+
+
+Source:
+
+   <date/>
+   <set-var info=<get-file-properties <__file__/> /> />
+   <date <get-var info[2] /> />
+   <date time="<get-var info[2] />" format="%Y-%m-%d %H:%M:%S" />
+   
+
+Output:
+
+   Wed Jun 24 23:11:31 2015
+   
+Wed Jun 24 23:09:30 2015
+   2015-06-24 23:09:30
+   
+
+
+
+
+
+=over 2
+
+=item * timer C<S>
+
+
+
+=back
+
+
+
+
+
+
+Prints the time spent since last call to this macro.  The printed value
+is the number of clock ticks, and so is dependant of your CPU.
+
+
+
+
+
+Source:
+
+   The number of clock ticks since the beginning of generation of
+   this documentation by &mp4h; is:
+   <timer/>
+   
+
+Output:
+
+   The number of clock ticks since the beginning of generation of
+   this documentation by B<mp4h> is:
+   user 4
+   sys 0
+   
+
+
+
+
+
+
+=over 2
+
+=item * mp4h-l10n C<S>
+
+C<I<name>=I<value>> 
+
+=back
+
+
+
+
+
+
+Set locale-specific variables.  By default, the portable "C" locale is
+selected. As locales have different names on different platforms, you
+must refer to your system documentation to find which values are adapted
+to your system.
+
+
+
+
+
+
+=over 2
+
+=item * mp4h-output-radix C<S>
+
+C<I<number>> 
+
+=back
+
+
+
+
+
+
+Change the output format of floats by setting the number of digits after
+the decimal point. Default is to print numbers in the "%6.f" format.
+
+
+
+
+
+Source:
+
+   <add 1.2 3.4 />
+   <mp4h-output-radix 2 />
+   <add 1.2 3.4 />
+   
+
+Output:
+
+   4.600000
+   
+4.60
+   
+
+
+
+
+=head1 EXTERNAL PACKAGES
+
+
+
+
+It is possible to include external files with the C<include>
+command.  Files are first searched in current directory, then in
+directories specified on command-line with the C<-I> option, next
+in directories listed in the C<MP4HLIB> environment
+variable (it used to be C<MP4HPATH> for versions prior to
+1.3), and last under the compile-time location
+(C</usr/local/lib/mp4h/1.3.0:/usr/local/share/mp4h>
+by default).
+
+
+
+
+
+
+
+Another way to include packages is with the C<use> command.
+There are two differences between C<use> and C<include>:
+first, package name has no suffix; and more important, a package cannot
+be loaded more than once.
+
+
+
+
+=head1 MACRO EXPANSION
+
+
+
+
+This part describes internal mechanism of macro expansion.
+It must be as precise and exhaustive as possible so
+contact me C<E<lt>URL:mailto:barbier@imacs.polytechnique.frE<gt>>
+if you have any suggestion.
+
+
+
+
+=head2 Basics
+
+
+
+
+Let us begin with some examples:
+
+
+
+
+
+
+
+Source:
+
+   <define-tag foo>
+   This is a simple tag
+   </define-tag>
+   <define-tag bar endtag=required>
+   This is a complex tag
+   </define-tag>
+   <foo/>
+   <bar>Body function</bar>
+   
+
+Output:
+
+   This is a simple tag
+   
+
+   This is a complex tag
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+User defined macros may have attributes like HTML tags. To handle these
+attributes in replacement text, following conventions have been adopted
+(mostly derived from B<Meta-HTML>):
+
+
+
+
+
+
+=over 2
+
+
+
+
+=item *
+
+Sequence C<%name> is replaced by the command name.
+
+
+
+
+=item *
+
+Attributes are numbered from 0. In replacement text,
+C<%0> is replaced by first argument, C<%1>
+by the 2nd, etc.
+As there is no limitation on the number of arguments,
+C<%20> is the 21st argument and not the third followed by the 0
+letter.
+
+Source:
+
+   <define-tag href>
+   <a href="%0">%1</a>
+   </define-tag>
+   <href http://www.gimp.org "The Gimp" />
+   
+
+Output:
+
+   <a href="http://www.gimp.org">The Gimp</a>
+   
+
+
+
+
+
+
+
+
+=item *
+
+Sequence C<%#> prints number of attributes.
+
+
+
+
+=item *
+
+Sequence C<%%> is replaced by C<%>, which is useful in
+nested definitions.
+
+Source:
+
+   <define-tag outer>;;;
+   outer, # attributes: %#
+   <define-tag inner1>;;;
+   inner1, # attributes: %#;;;
+   </define-tag>;;;
+   <define-tag inner2>;;;
+   inner2, # attributes: %%#;;;
+   </define-tag>;;;
+   <inner1 %attributes and some others />
+   <inner2 %attributes and some others />
+   </define-tag>
+   <outer list attributes />
+   
+
+Output:
+
+   outer, # attributes: 2
+   inner1, # attributes: 2
+   inner2, # attributes: 5
+   
+
+
+
+
+
+
+
+
+=item *
+
+Sequence C<%attributes> is replaced by the space separated
+list of attributes.
+
+Source:
+
+   <define-tag mail1>
+   <set-var %attributes />
+   <get-var name />
+   <get-var mail />
+   </define-tag>
+   <set-var name="" mail="" />
+   <mail1 name="Dr. Foo" mail="hello@foo.com" />
+   
+
+Output:
+
+   Dr. Foo
+   hello@foo.com
+   
+
+
+
+
+
+
+
+
+=item *
+
+Sequence C<%body> is replaced by the body of a complex macro.
+
+Source:
+
+   <define-tag mail2 endtag=required whitespace=delete>
+   <set-var %attributes />
+   <a href="mailto:<get-var mail />">%body</a>
+   </define-tag>
+   <mail2 mail="hello@foo.com">
+   <img src="photo.png" alt="Dr. Foo" border=0    />
+   </mail2>
+   
+
+Output:
+
+   <a href="mailto:hello@foo.com">
+   <img src="photo.png" alt="Dr. Foo" border=0      />
+   </a>
+   
+
+
+
+
+
+
+
+=item *
+
+The two forms above accept modifiers. When C<%Aattributes>
+or C<%Abody> is used, a newline separated list of attributes is
+printed.
+
+Source:
+
+   <define-tag show-attributes whitespace=delete>
+   <set-var list="%Aattributes" i=0 />
+   <foreach attr list>
+   <group "%<get-var i />: <get-var attr />" />
+   <increment i />
+   </foreach>
+   </define-tag>
+   <show-attributes name="Dr. Foo" mail="hello@foo.com" />
+   
+
+Output:
+
+   %0: name=Dr. Foo%1: mail=hello@foo.com
+   
+
+
+
+
+
+
+
+=item *
+
+Another alternate form is obtained by replacing C<A>
+by C<U>, in which case text is replaced but will not be
+expanded.
+This does make sense only when macro has been defined with
+C<attributes=verbatim>, otherwise attributes are expanded
+before replacement.
+
+Source:
+
+   <define-tag show1>
+   Before expansion: %Uattributes
+   After expansion: %attributes
+   </define-tag>
+   <define-tag show2 attributes=verbatim>
+   Before expansion: %Uattributes
+   After expansion: %attributes
+   </define-tag>
+   <define-tag bar>and here %attributes</define-tag>
+   <show1 <bar we go /> />
+   <show2 <bar we go /> />
+   
+
+Output:
+
+   Before expansion: and here we go
+   After expansion: and here we go
+   
+
+   Before expansion: <bar we go />
+   After expansion: and here we go
+   
+
+
+
+
+
+
+
+
+=item *
+
+Modifiers C<A> and C<U> can be combined.
+
+
+
+=back
+
+
+
+
+
+B<Note:> 
+Input expansion is completely different in B<Meta-HTML> and in B<mp4h>.
+With B<Meta-HTML> it is sometimes necessary to use other constructs like
+C<%xbody> and C<%qbody>.
+In order to improve compatibity with B<Meta-HTML>, these constructs are
+recognized and are interpreted like C<%body>.
+Another feature provided for compatibility reason is the fact that for
+simple tags C<%body> and C<%attributes> are equivalent.
+These features are in the current B<mp4h> version but may disappear in
+future releases.
+
+
+
+
+=head2 Attributes
+
+
+
+
+
+Attributes are separated by spaces, tabulations or newlines, and each
+attribute must be a valid B<mp4h> entity. For instance with the
+definitions above, C<E<lt>barE<gt>> can not be an attribute since it
+must be finished by C<E<lt>/barE<gt>>.
+But this is valid:
+
+
+
+
+
+   <foo <foo/> />
+
+or even
+
+
+   <foo <foo name=src url=ici /> />
+
+
+
+
+In these examples, the C<foo> tag has only one argument.
+
+
+
+
+
+
+
+Under certain circumstances it is necessary to group multiple statements
+into a single one. This can be done with double quotes or with the
+C<group> primitive, e.g.
+
+
+
+
+
+   <foo "This is the 1st attribute"
+              <group and the second /> />
+
+
+
+B<Note:> 
+Unlike HTML single quotes can not replace doube quotes for this purpose.
+
+
+
+
+
+
+
+If double quotes appear in an argument, they must be escaped by a
+backslash C<\>.
+
+
+
+
+Source:
+
+     <set-var text="Text with double quotes \" inside" />
+     <get-var text />
+   
+
+Output:
+
+     
+     Text with double quotes " inside
+   
+
+
+
+=head2 Macro evaluation
+
+
+
+
+Macros are characterized by
+
+
+
+
+
+=over 2
+
+
+
+
+=item *
+
+name
+
+
+
+=item *
+
+container status (simple or complex)
+
+
+
+=item *
+
+if attributes are expanded or not
+
+
+
+=item *
+
+function type (primitive or user defined macro)
+
+
+
+=item *
+
+for primitives, adress of corresponding code in memory and for
+user defined macros the replacement text
+
+
+
+=back
+
+
+
+
+
+
+Characters are read on input until a left angle bracket is found.
+Then macro name is read. After that attributes are read, verbatim or not
+depending on how this macro as been defined. And if this macro is
+complex, its body is read verbatim. When this is finished, some special
+sequences in replacement text are replaced (like C<%body>, C<%attributes>, C<%0>, C<%1>, etc.) and resulting text is put on
+input stack in order to be rescanned.
+
+
+
+
+
+
+B<Note:> 
+By default attributes are evaluated before any replacement.
+
+
+
+
+
+
+
+
+Consider the following example, to change text in typewriter font:
+
+
+
+
+
+   
+<define-tag text-tt endtag=required whitespace=delete>
+   <tt>%body</tt>
+   </define-tag>
+   
+
+
+
+
+This definition has a major drawback:
+
+
+
+
+Source:
+
+   <text-tt>This is an <text-tt>example</text-tt></text-tt>
+   
+
+Output:
+
+   <tt>This is an <tt>example</tt></tt>
+   
+
+
+We would like the inner tags be removed.
+
+
+
+
+
+
+First idea is to use an auxiliary variable to know whether we still
+are inside such an environment:
+
+
+
+
+
+   
+<set-var _text:tt=0 />
+   <define-tag text-tt endtag=required whitespace=delete>
+   <increment _text:tt />
+   <ifeq <get-var _text:tt /> 1 "<tt*>" />
+   %body
+   <ifeq <get-var _text:tt /> 1 "</tt*>" />
+   <decrement _text:tt />
+   </define-tag>
+   
+
+
+
+(the presence of asterisks in HTML tags is explained in next section).
+
+
+
+
+
+Source:
+
+   <text-tt>This is an <text-tt>example</text-tt></text-tt>
+   
+
+Output:
+
+   <tt>This is an example</tt>
+   
+
+
+
+
+
+
+
+But if we use simple tags, as in the example below, our definition does
+not seem to work. It is because attributes are expanded before they are
+put into replacement text.
+
+
+
+
+Source:
+
+   <define-tag opt><text-tt>%attributes</text-tt></define-tag>
+   <opt "This is an <opt example />" />
+   
+
+Output:
+
+   <tt>This is an <tt>example</tt></tt>
+   
+
+
+
+
+
+
+
+If we want to prevent this problem we have to forbid attributes
+expansion with
+
+
+
+
+Source:
+
+   <define-tag opt attributes=verbatim>;;;
+   <text-tt>%attributes</text-tt>;;;
+   </define-tag>
+   <opt "This is an <opt example />" />
+   
+
+Output:
+
+   <tt>This is an example</tt>
+   
+
+
+
+=head2 Expansion flags
+
+
+
+
+When you want to embed some server-side scripting language in your
+pages, you face up some weird problems, like in
+
+
+
+
+
+   
+<a href=<%= $url %>>Hello</a>
+   
+
+
+
+
+The question is how do B<mp4h> know that this input has some extra
+delimiters? The answer is that B<mp4h> should not try to handle some
+special delimiters, because it cannot handle all of them (there are ASP,
+ePerl, PHP,... and some of them are customizable). Now, remember that B<mp4h>
+is a macro-processor, not an XML parser. So we must focus on macros,and
+format our input file so that it can be parsed without any problem.
+Previous example may be written
+
+
+
+
+
+   
+<a href="<%= $url %>">Hello</a>
+   
+
+
+
+
+because quotes prevent inner right-angle bracket from closing the
+C<a> tag. 
+
+
+
+
+
+
+
+Another common problem is when we need to print only a begin or an end
+tag alone.  For instance it is very desirable to define its own headers
+and footers with
+
+
+
+
+
+   
+<define-tag header>
+   <html*>
+   <head>
+   ... put here some informations ....
+   </head>
+   <body* bgcolor="#ffffff" text="#000000">
+   </define-tag>
+   <define-tag footer>
+   </body*>
+   </html*>
+   </define-tag>
+   
+
+
+
+
+Asterisks mark these tags as pseudo-simple tags, which means that they
+are complex HTML tags, but used as simple tags within B<mp4h> because
+tags would not be well nested otherwise.
+
+
+
+
+
+
+
+This asterisk is called ``trailing star'', it appears at the end of the
+tag name.
+
+
+
+
+
+
+
+Sometimes HTML tags are not parsable, as in this javascript code:
+
+
+
+
+
+   
+  ...
+       document.write('<*img src="foo.gif"');
+       if (text) document.write(' alt="'+text+'"');
+       document.write('>');
+     ...
+   
+
+
+
+The ``leading star'' is an asterisk between left-angle bracket and
+tag name, which prevents this tag from being parsed.
+
+
+
+
+
+
+
+That said we can now understand what the C<--expansion> flag is
+for.  It controls how expansion is performed by mp4h.  It is followed by
+an integer, which is a bit sum of the following values
+
+
+
+
+
+
+=over 2
+
+
+
+
+=item B<1> do not parse unknown tags.
+
+
+
+When set, HTML tags are not parsed.
+When unset, HTML tags are parsed, i.e. that attributes and/or body is
+collected.
+
+
+
+
+
+
+
+
+=item B<2> unknown tags are assumed being simple.
+
+
+
+When set, HTML tags are simple by default.
+When unset, HTML tags are complex by default, unless their attribute
+contain a trailing slash or a trailing star appear just after tag name
+(see below).
+
+
+
+
+
+
+
+
+=item B<4> trailing star in tag name do not make this tag simple.
+
+
+
+When set, trailing star in tag name has no special effect.
+When unset, it causes an HTML tag to be simple.
+
+
+
+
+
+
+
+
+=item B<8> an unmatched end tag closes all previous unmatched begin tags.
+
+
+
+When set, all missing end closing tags are automatically inserted.
+When unset, an unmatched end tag is discarded and interpreted as normal
+text, so processing goes on until matching and tag is found.
+
+
+
+
+
+
+
+
+=item B<16> interpret backslashes as printf.
+
+
+
+When set, backslashes before non special characters are removed.
+When unset, they are preserved.
+
+
+
+
+
+
+
+
+=item B<32> remove trailing slash in tag attributes.
+
+
+
+When set, remove trailing slash in tag attributes on output.
+When unset, they are preserved.
+
+
+
+
+
+
+
+
+=item B<64> do not remove trailing star in tag name.
+
+
+
+When set, trailing star after tag name are preserved on output.
+When unset, they are removed.
+
+
+
+
+
+
+
+
+=item B<128> do not remove leading star in tag name.
+
+
+
+When set, leading star before tag name are preserved on output.
+When unset, they are removed.
+
+
+
+
+
+
+
+
+=item B<256> do not add a space before trailing slash in tag attributes
+
+
+
+By default, a space is inserted before trailing slash in tag attributes.
+When set, this space is not prepended.
+
+
+
+
+
+
+
+
+=item B<1024> suppress warnings about bad nested tags.
+
+
+
+When set, warnings about bad nested tags are not displayed.
+When unset, they are printed on standard error.
+
+
+
+
+
+
+
+
+=item B<2048> suppress warnings about missing trailing slash.
+
+
+
+When set, warnings about missing trailing slash are not displayed.
+When unset, they are printed on standard error.
+
+
+
+
+
+
+
+
+=back
+
+
+
+
+
+
+Run
+
+
+
+
+   
+  mp4h -h
+   
+to find default value. Current value matches HTML syntax, and it will
+tend to zero when XHTML syntax becomes more familiar.
+
+=head1 AUTHOR
+
+
+
+
+Denis Barbier C<E<lt>URL:mailto:barbier@imacs.polytechnique.frE<gt>>
+
+
+
+
+
+
+
+Mp4h has its own
+homepage C<E<lt>URL:http://www.engelschall.com/sw/mp4h/E<gt>>.
+
+
+
+
+=head1 THANKS
+
+
+
+
+Sincere thanks to Brian J. Fox for writing B<Meta-HTML> and Rene
+Seindal for maintaining this wonderful macro parser called GNU B<m4>.
+
+
+
+
+
+
+=cut
+
+
